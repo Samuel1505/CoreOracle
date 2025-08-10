@@ -4,7 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "hardhat compile",
+    "deploy:local": "hardhat run scripts/deploy-local.ts --network localhost",
+    "deploy:core-testnet": "hardhat run scripts/deploy-core-testnet.ts --network coreTestnet",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network mainnet",
+    "verify:sepolia": "hardhat verify --network sepolia",
+    "verify:mainnet": "hardhat verify --network mainnet",
+    "test:contract": "hardhat run scripts/test-contract.ts --network coreTestnet",
+    "generate:verification": "hardhat run scripts/generate-verification-json.ts",
+    "extract:abi": "hardhat run scripts/extract-abi.ts",
+    "node": "hardhat node",
+    "clean": "hardhat clean"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +27,7 @@
     "hardhat": "^2.26.2"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.4.0"
+    "@openzeppelin/contracts": "^5.4.0",
+    "dotenv": "^16.4.5"
   }
 }
