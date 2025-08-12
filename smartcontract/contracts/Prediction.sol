@@ -2,14 +2,13 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
+contract PrizePoolPrediction is ReentrancyGuard {
     
     struct Prediction {
         uint256 id;
         string question;
-        string[] options; // e.g., ["YES", "NO"] or ["Team A", "Team B", "Draw"]
+        string[] options; 
         uint256 entryFee;
         uint256 prizePool;
         uint256 endTime;
@@ -17,12 +16,12 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
         bool resolved;
         uint256 winningOption; // Index of winning option
         bool active;
-        address creator; // Platform admin who created it
+        address creator; // Anyone can create predictions
         uint256 totalParticipants;
     }
     
     struct UserPrediction {
-        uint256 option; // Index of chosen option
+        uint256 option; 
         bool claimed;
         uint256 timestamp;
     }
@@ -37,11 +36,26 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
         bool hasStreakSaver; // One-time streak protection
     }
     
+    struct Dispute {
+        uint256 predictionId;
+        address challenger;
+        uint256 proposedWinningOption;
+        uint256 votesForCreator;
+        uint256 votesForChallenger;
+        uint256 totalVotes;
+        bool resolved;
+        uint256 deadline;
+        mapping(address => bool) hasVoted;
+        mapping(address => bool) votedForCreator;
+    }
+    
     // State variables
     uint256 public predictionCounter;
     uint256 public platformFee = 500; // 5% (basis points)
     uint256 public constant BASIS_POINTS = 10000;
     uint256 public streakSaverPrice = 0.01 ether; // Price to buy streak protection
+    uint256 public disputeStake = 0.01 ether; // Stake required to challenge resolution
+    uint256 public disputeVotingPeriod = 3 days; // How long to vote on disputes
     
     mapping(uint256 => Prediction) public predictions;
     mapping(uint256 => mapping(address => UserPrediction)) public userPredictions;
@@ -49,6 +63,8 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
     mapping(uint256 => mapping(uint256 => uint256)) public optionCounts; // predictionId => optionIndex => count
     mapping(address => uint256[]) public userParticipatedPredictions;
     mapping(address => UserStats) public userStats; // User statistics and streaks
+    mapping(uint256 => Dispute) public disputes; // predictionId => Dispute
+    mapping(uint256 => bool) public hasDispute; // predictionId => has active dispute
     
     // Leaderboard arrays (top 10)
     address[] public streakLeaders;
@@ -62,7 +78,8 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
         string[] options,
         uint256 entryFee,
         uint256 prizePool,
-        uint256 endTime
+        uint256 endTime,
+        address indexed creator
     );
     
     event PredictionSubmitted(
@@ -83,6 +100,13 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
         uint256 indexed predictionId,
         address indexed user,
         uint256 amount
+    );
+    
+    event PrizesDistributed(
+        uint256 indexed predictionId,
+        uint256 totalWinners,
+        uint256 totalPrizeDistributed,
+        uint256 platformFeeCollected
     );
     
     event PrizePoolIncreased(
@@ -107,22 +131,45 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
         string leaderboardType
     );
     
+    event DisputeCreated(
+        uint256 indexed predictionId,
+        address indexed challenger,
+        uint256 proposedWinningOption,
+        uint256 stake
+    );
+    
+    event DisputeVote(
+        uint256 indexed predictionId,
+        address indexed voter,
+        bool votedForCreator,
+        uint256 stake
+    );
+    
+    event DisputeResolved(
+        uint256 indexed predictionId,
+        bool creatorWon,
+        uint256 finalWinningOption,
+        uint256 totalVotes
+    );
+    
     constructor() {}
     
-    // Create a new prediction (only owner/admin)
+    // Create a new prediction (anyone can create)
     function createPrediction(
         string memory _question,
         string[] memory _options,
         uint256 _entryFee,
         uint256 _endTime,
         uint256 _resolutionTime
-    ) external payable onlyOwner returns (uint256) {
+    ) external payable returns (uint256) {
         require(_endTime > block.timestamp, "End time must be in future");
         require(_resolutionTime > _endTime, "Resolution time must be after end time");
         require(bytes(_question).length > 0, "Question cannot be empty");
         require(_options.length >= 2, "Must have at least 2 options");
         require(_entryFee > 0, "Entry fee must be greater than 0");
         require(msg.value > 0, "Must provide initial prize pool");
+        require(_endTime - block.timestamp >= 1 hours, "Prediction must last at least 1 hour");
+        require(_resolutionTime - _endTime >= 1 hours, "Resolution period must be at least 1 hour");
         
         predictionCounter++;
         
@@ -147,7 +194,8 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
             _options, 
             _entryFee, 
             msg.value, 
-            _endTime
+            _endTime,
+            msg.sender
         );
         
         return predictionCounter;
@@ -166,6 +214,7 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
         require(_optionIndex < prediction.options.length, "Invalid option");
         require(msg.value == prediction.entryFee, "Incorrect entry fee");
         require(userPredictions[_predictionId][msg.sender].timestamp == 0, "Already predicted");
+        require(msg.sender != prediction.creator, "Creator cannot predict on own prediction");
         
         // Record user's prediction
         userPredictions[_predictionId][msg.sender] = UserPrediction({
@@ -197,22 +246,22 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
         );
     }
     
-    // Resolve a prediction (only owner/admin)
-    function resolvePrediction(uint256 _predictionId, uint256 _winningOption) 
-        external 
-        onlyOwner 
-    {
+    // Resolve a prediction (only creator can resolve initially)
+    function resolvePrediction(uint256 _predictionId, uint256 _winningOption) external {
         Prediction storage prediction = predictions[_predictionId];
         require(prediction.active, "Prediction not active");
         require(!prediction.resolved, "Already resolved");
         require(block.timestamp >= prediction.endTime, "Prediction period not ended");
-        require(block.timestamp <= prediction.resolutionTime, "Resolution period expired");
+        require(block.timestamp <= prediction.resolutionTime + 7 days, "Resolution period expired");
         require(_winningOption < prediction.options.length, "Invalid winning option");
+        require(msg.sender == prediction.creator, "Only creator can resolve initially");
+        require(!hasDispute[_predictionId], "Cannot resolve while dispute is active");
         
         prediction.resolved = true;
         prediction.winningOption = _winningOption;
         
-        uint256 winnersCount = optionCounts[_predictionId][_winningOption];
+        // Automatically distribute prizes to winners
+        _distributePrizes(_predictionId, _winningOption);
         
         // Update streaks for all participants
         _updateStreaksAfterResolution(_predictionId, _winningOption);
@@ -221,42 +270,78 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
             _predictionId, 
             _winningOption, 
             prediction.options[_winningOption],
-            winnersCount
+            optionCounts[_predictionId][_winningOption]
         );
     }
     
-    // Claim prize (winners only)
-    function claimPrize(uint256 _predictionId) external nonReentrant {
+    // Internal function to automatically distribute prizes
+    function _distributePrizes(uint256 _predictionId, uint256 _winningOption) internal {
         Prediction memory prediction = predictions[_predictionId];
-        require(prediction.resolved, "Prediction not resolved");
+        uint256 winnersCount = optionCounts[_predictionId][_winningOption];
         
-        UserPrediction storage userPred = userPredictions[_predictionId][msg.sender];
-        require(userPred.timestamp > 0, "No prediction found");
-        require(!userPred.claimed, "Prize already claimed");
-        require(userPred.option == prediction.winningOption, "Not a winner");
+        if (winnersCount == 0) {
+            // No winners, refund entry fees to participants
+            _refundEntryFees(_predictionId);
+            return;
+        }
         
-        userPred.claimed = true;
-        
-        uint256 winnersCount = optionCounts[_predictionId][prediction.winningOption];
-        require(winnersCount > 0, "No winners");
-        
-        // Calculate streak multiplier bonus
-        uint256 streakMultiplier = _calculateStreakMultiplier(msg.sender);
-        
-        // Calculate prize per winner
+        // Calculate prize distribution
         uint256 totalPrize = prediction.prizePool;
         uint256 platformFeeAmount = (totalPrize * platformFee) / BASIS_POINTS;
         uint256 winnersShare = totalPrize - platformFeeAmount;
         uint256 basePrize = winnersShare / winnersCount;
-        uint256 finalPrize = (basePrize * streakMultiplier) / BASIS_POINTS;
         
-        // Update user winnings stats
-        userStats[msg.sender].totalWinnings += finalPrize;
-        _updateLeaderboards(msg.sender);
+        uint256 totalDistributed = 0;
+        uint256 actualWinners = 0;
         
-        payable(msg.sender).transfer(finalPrize);
+        // Distribute prizes to all winners
+        address[] memory winners = optionParticipants[_predictionId][_winningOption];
         
-        emit PrizesClaimed(_predictionId, msg.sender, finalPrize);
+        for (uint256 i = 0; i < winners.length; i++) {
+            address winner = winners[i];
+            UserPrediction storage userPred = userPredictions[_predictionId][winner];
+            
+            if (userPred.timestamp > 0 && !userPred.claimed) {
+                // Calculate streak multiplier for this winner
+                uint256 streakMultiplier = _calculateStreakMultiplier(winner);
+                uint256 finalPrize = (basePrize * streakMultiplier) / BASIS_POINTS;
+                
+                // Mark as claimed and transfer prize
+                userPred.claimed = true;
+                userStats[winner].totalWinnings += finalPrize;
+                
+                // Transfer prize to winner
+                payable(winner).transfer(finalPrize);
+                
+                totalDistributed += finalPrize;
+                actualWinners++;
+                
+                emit PrizesClaimed(_predictionId, winner, finalPrize);
+            }
+        }
+        
+        // Emit event for total distribution
+        emit PrizesDistributed(_predictionId, actualWinners, totalDistributed, platformFeeAmount);
+    }
+    
+    // Internal function to refund entry fees if no winners
+    function _refundEntryFees(uint256 _predictionId) internal {
+        Prediction memory prediction = predictions[_predictionId];
+        
+        // Refund all participants their entry fees
+        for (uint256 i = 0; i < prediction.options.length; i++) {
+            address[] memory participants = optionParticipants[_predictionId][i];
+            
+            for (uint256 j = 0; j < participants.length; j++) {
+                address participant = participants[j];
+                UserPrediction storage userPred = userPredictions[_predictionId][participant];
+                
+                if (userPred.timestamp > 0 && !userPred.claimed) {
+                    userPred.claimed = true;
+                    payable(participant).transfer(prediction.entryFee);
+                }
+            }
+        }
     }
     
     // Add more funds to prize pool (optional)
@@ -283,6 +368,20 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
         }
         
         emit StreakSaverPurchased(msg.sender);
+    }
+    
+    // Cancel prediction if no participants (only creator can cancel)
+    function cancelPrediction(uint256 _predictionId) external {
+        Prediction storage prediction = predictions[_predictionId];
+        require(msg.sender == prediction.creator, "Only creator can cancel");
+        require(!prediction.resolved, "Cannot cancel resolved prediction");
+        require(prediction.totalParticipants == 0, "Cannot cancel with participants");
+        require(block.timestamp < prediction.endTime, "Prediction period already started");
+        
+        prediction.active = false;
+        
+        // Refund initial prize pool to creator
+        payable(prediction.creator).transfer(prediction.prizePool);
     }
     
     // Internal function to update streaks after prediction resolution
@@ -494,6 +593,7 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
         bool resolved,
         uint256 winningOption,
         bool active,
+        address creator,
         uint256 totalParticipants
     ) {
         Prediction memory pred = predictions[_predictionId];
@@ -508,6 +608,7 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
             pred.resolved,
             pred.winningOption,
             pred.active,
+            pred.creator,
             pred.totalParticipants
         );
     }
@@ -693,34 +794,21 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
         return 0; // Not ranked
     }
     
-    // Admin functions
-    function setPlatformFee(uint256 _fee) external onlyOwner {
+    // Platform fee management (community governance could be added here)
+    function setPlatformFee(uint256 _fee) external {
+        // For now, anyone can set fee, but in production you might want community voting
         require(_fee <= 2000, "Fee too high"); // Max 20%
         platformFee = _fee;
     }
     
-    function setStreakSaverPrice(uint256 _price) external onlyOwner {
+    function setStreakSaverPrice(uint256 _price) external {
+        // For now, anyone can set price, but in production you might want community voting
         streakSaverPrice = _price;
     }
     
-    function withdrawPlatformFees() external onlyOwner {
-        // Calculate total platform fees earned
-        uint256 balance = address(this).balance;
-        payable(owner()).transfer(balance);
-    }
-    
-    function pausePrediction(uint256 _predictionId) external onlyOwner {
-        predictions[_predictionId].active = false;
-    }
-    
-    function unpausePrediction(uint256 _predictionId) external onlyOwner {
-        predictions[_predictionId].active = true;
-    }
-    
-    // Emergency function to resolve stuck predictions
+    // Emergency function to resolve stuck predictions (anyone can call after 7 days)
     function emergencyResolve(uint256 _predictionId, uint256 _winningOption) 
         external 
-        onlyOwner 
     {
         require(block.timestamp > predictions[_predictionId].resolutionTime + 7 days, 
                 "Use regular resolve function");
@@ -737,5 +825,259 @@ contract PrizePoolPrediction is ReentrancyGuard, Ownable(msg.sender) {
             prediction.options[_winningOption],
             optionCounts[_predictionId][_winningOption]
         );
+    }
+
+    // Check if prizes have been distributed for a prediction
+    function arePrizesDistributed(uint256 _predictionId) external view returns (bool) {
+        Prediction memory prediction = predictions[_predictionId];
+        if (!prediction.resolved) return false;
+        
+        uint256 winningOption = prediction.winningOption;
+        address[] memory winners = optionParticipants[_predictionId][winningOption];
+        
+        for (uint256 i = 0; i < winners.length; i++) {
+            UserPrediction storage userPred = userPredictions[_predictionId][winners[i]];
+            if (!userPred.claimed) return false;
+        }
+        return true;
+    }
+    
+    // Get prize distribution status for a user
+    function getUserPrizeStatus(uint256 _predictionId, address _user) external view returns (
+        bool hasWon,
+        bool prizeClaimed,
+        uint256 prizeAmount,
+        uint256 streakMultiplier
+    ) {
+        Prediction memory prediction = predictions[_predictionId];
+        UserPrediction storage userPred = userPredictions[_predictionId][_user];
+        
+        if (!prediction.resolved || userPred.timestamp == 0) {
+            return (false, false, 0, 0);
+        }
+        
+        bool isWinner = (userPred.option == prediction.winningOption);
+        uint256 multiplier = _calculateStreakMultiplier(_user);
+        
+        if (isWinner) {
+            uint256 winnersCount = optionCounts[_predictionId][prediction.winningOption];
+            uint256 totalPrize = prediction.prizePool;
+            uint256 platformFeeAmount = (totalPrize * platformFee) / BASIS_POINTS;
+            uint256 winnersShare = totalPrize - platformFeeAmount;
+            uint256 basePrize = winnersShare / winnersCount;
+            uint256 finalPrize = (basePrize * multiplier) / BASIS_POINTS;
+            
+            return (true, userPred.claimed, finalPrize, multiplier);
+        }
+        
+        return (false, false, 0, 0);
+    }
+
+    // Create a dispute to challenge a creator's resolution
+    function createDispute(uint256 _predictionId, uint256 _proposedWinningOption) external payable {
+        Prediction storage prediction = predictions[_predictionId];
+        require(prediction.resolved, "Prediction not resolved");
+        require(msg.value >= disputeStake, "Insufficient stake for dispute");
+        require(!hasDispute[_predictionId], "Dispute already exists");
+        require(_proposedWinningOption < prediction.options.length, "Invalid option");
+        require(_proposedWinningOption != prediction.winningOption, "Must propose different option");
+        
+        // Create dispute
+        Dispute storage dispute = disputes[_predictionId];
+        dispute.predictionId = _predictionId;
+        dispute.challenger = msg.sender;
+        dispute.proposedWinningOption = _proposedWinningOption;
+        dispute.deadline = block.timestamp + disputeVotingPeriod;
+        dispute.resolved = false;
+        
+        hasDispute[_predictionId] = true;
+        
+        // Temporarily pause the prediction during dispute
+        prediction.active = false;
+        
+        emit DisputeCreated(_predictionId, msg.sender, _proposedWinningOption, msg.value);
+    }
+    
+    // Vote on a dispute (participants can vote)
+    function voteOnDispute(uint256 _predictionId, bool _voteForCreator) external payable {
+        require(hasDispute[_predictionId], "No active dispute");
+        Dispute storage dispute = disputes[_predictionId];
+        require(!dispute.resolved, "Dispute already resolved");
+        require(block.timestamp < dispute.deadline, "Voting period ended");
+        require(msg.value >= disputeStake, "Insufficient stake for voting");
+        require(!dispute.hasVoted[msg.sender], "Already voted");
+        
+        // Check if user participated in the prediction
+        UserPrediction storage userPred = userPredictions[_predictionId][msg.sender];
+        require(userPred.timestamp > 0, "Must have participated to vote");
+        
+        dispute.hasVoted[msg.sender] = true;
+        dispute.totalVotes++;
+        
+        if (_voteForCreator) {
+            dispute.votesForCreator++;
+            dispute.votedForCreator[msg.sender] = true;
+        } else {
+            dispute.votesForChallenger++;
+            dispute.votedForCreator[msg.sender] = false;
+        }
+        
+        emit DisputeVote(_predictionId, msg.sender, _voteForCreator, msg.value);
+    }
+
+    // Resolve a dispute after voting period ends
+    function resolveDispute(uint256 _predictionId) external {
+        require(hasDispute[_predictionId], "No active dispute");
+        Dispute storage dispute = disputes[_predictionId];
+        require(block.timestamp >= dispute.deadline, "Voting period not ended");
+        require(!dispute.resolved, "Dispute already resolved");
+        
+        dispute.resolved = true;
+        hasDispute[_predictionId] = false;
+        
+        Prediction storage prediction = predictions[_predictionId];
+        bool creatorWon = dispute.votesForCreator > dispute.votesForChallenger;
+        
+        if (creatorWon) {
+            // Creator's resolution stands, reactivate prediction
+            prediction.active = true;
+            emit DisputeResolved(_predictionId, true, prediction.winningOption, dispute.totalVotes);
+        } else {
+            // Challenger wins, update winning option and redistribute prizes
+            uint256 oldWinningOption = prediction.winningOption;
+            prediction.winningOption = dispute.proposedWinningOption;
+            
+            // Refund old winners and pay new winners
+            _redistributePrizesAfterDispute(_predictionId, oldWinningOption, dispute.proposedWinningOption);
+            
+            emit DisputeResolved(_predictionId, false, dispute.proposedWinningOption, dispute.totalVotes);
+        }
+        
+        // Distribute dispute stakes to voters
+        _distributeDisputeStakes(_predictionId, creatorWon);
+    }
+    
+    // Internal function to redistribute prizes after dispute resolution
+    function _redistributePrizesAfterDispute(uint256 _predictionId, uint256 _oldWinningOption, uint256 _newWinningOption) internal {
+        // Refund old winners
+        address[] memory oldWinners = optionParticipants[_predictionId][_oldWinningOption];
+        for (uint256 i = 0; i < oldWinners.length; i++) {
+            address oldWinner = oldWinners[i];
+            UserPrediction storage userPred = userPredictions[_predictionId][oldWinner];
+            if (userPred.claimed) {
+                // Calculate how much they received and refund it
+                uint256 oldPrize = _calculateUserPrize(_predictionId, oldWinner, _oldWinningOption);
+                userPred.claimed = false;
+                userStats[oldWinner].totalWinnings -= oldPrize;
+                payable(oldWinner).transfer(oldPrize);
+            }
+        }
+        
+        // Pay new winners
+        _distributePrizes(_predictionId, _newWinningOption);
+        
+        // Reactivate prediction
+        predictions[_predictionId].active = true;
+    }
+    
+    // Internal function to calculate user's prize for a specific option
+    function _calculateUserPrize(uint256 _predictionId, address _user, uint256 _option) internal view returns (uint256) {
+        Prediction memory prediction = predictions[_predictionId];
+        uint256 winnersCount = optionCounts[_predictionId][_option];
+        
+        if (winnersCount == 0) return 0;
+        
+        uint256 totalPrize = prediction.prizePool;
+        uint256 platformFeeAmount = (totalPrize * platformFee) / BASIS_POINTS;
+        uint256 winnersShare = totalPrize - platformFeeAmount;
+        uint256 basePrize = winnersShare / winnersCount;
+        
+        uint256 streakMultiplier = _calculateStreakMultiplier(_user);
+        return (basePrize * streakMultiplier) / BASIS_POINTS;
+    }
+    
+    // Internal function to distribute dispute stakes
+    function _distributeDisputeStakes(uint256 _predictionId, bool _creatorWon) internal {
+        Dispute storage dispute = disputes[_predictionId];
+        
+        // Distribute stakes to voters based on outcome
+        for (uint256 i = 0; i < optionParticipants[_predictionId][0].length; i++) {
+            address participant = optionParticipants[_predictionId][0][i];
+            if (dispute.hasVoted[participant]) {
+                bool votedForCreator = dispute.votedForCreator[participant];
+                
+                if ((_creatorWon && votedForCreator) || (!_creatorWon && !votedForCreator)) {
+                    // Voter was correct, they get their stake back plus bonus
+                    payable(participant).transfer(disputeStake * 2); // Double their stake
+                } else {
+                    // Voter was wrong, they lose their stake
+                    // Stakes go to the platform (or could be distributed to correct voters)
+                }
+            }
+        }
+    }
+
+    // Get dispute information
+    function getDisputeInfo(uint256 _predictionId) external view returns (
+        bool hasActiveDispute,
+        address challenger,
+        uint256 proposedWinningOption,
+        uint256 votesForCreator,
+        uint256 votesForChallenger,
+        uint256 totalVotes,
+        uint256 deadline,
+        bool resolved
+    ) {
+        if (!hasDispute[_predictionId]) {
+            return (false, address(0), 0, 0, 0, 0, 0, false);
+        }
+        
+        Dispute storage dispute = disputes[_predictionId];
+        return (
+            true,
+            dispute.challenger,
+            dispute.proposedWinningOption,
+            dispute.votesForCreator,
+            dispute.votesForChallenger,
+            dispute.totalVotes,
+            dispute.deadline,
+            dispute.resolved
+        );
+    }
+    
+    // Check if user has voted on a dispute
+    function hasUserVotedOnDispute(uint256 _predictionId, address _user) external view returns (
+        bool hasVoted,
+        bool votedForCreator
+    ) {
+        if (!hasDispute[_predictionId]) {
+            return (false, false);
+        }
+        
+        Dispute storage dispute = disputes[_predictionId];
+        return (
+            dispute.hasVoted[_user],
+            dispute.votedForCreator[_user]
+        );
+    }
+    
+    // Get dispute statistics
+    function getDisputeStats(uint256 _predictionId) external view returns (
+        uint256 totalParticipants,
+        uint256 participantsWhoVoted,
+        uint256 votingPercentage
+    ) {
+        Prediction memory prediction = predictions[_predictionId];
+        uint256 total = prediction.totalParticipants;
+        
+        if (!hasDispute[_predictionId] || total == 0) {
+            return (total, 0, 0);
+        }
+        
+        Dispute storage dispute = disputes[_predictionId];
+        uint256 voted = dispute.totalVotes;
+        uint256 percentage = (voted * BASIS_POINTS) / total;
+        
+        return (total, voted, percentage);
     }
 }
