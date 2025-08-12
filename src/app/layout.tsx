@@ -22,7 +22,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en">
-      <body className={`${pridi.variable} font-sans`}>{children}
+      <body className={`${pridi.variable} font-sans`}>
         <ContextProvider cookies={cookies}>
           {children}
         </ContextProvider>

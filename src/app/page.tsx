@@ -8,13 +8,7 @@ import { TrendingUp, Users, Trophy, Shield, ArrowRight, Wallet } from "lucide-re
 import Link from "next/link"
 
 export default function HomePage() {
-  const [isWalletConnected, setIsWalletConnected] = useState(false)
-
-  const connectWallet = async () => {
-    // Simulate wallet connection
-    setIsWalletConnected(true)
-  }
-
+ 
   const featuredMarkets = [
     {
       id: 1,
