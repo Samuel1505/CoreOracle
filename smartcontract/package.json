@@ -15,6 +15,7 @@
     "test:contract": "hardhat run scripts/test-contract.ts --network coreTestnet",
     "generate:verification": "hardhat run scripts/generate-verification-json.ts",
     "extract:abi": "hardhat run scripts/extract-abi.ts",
+    "test:local": "hardhat run scripts/test-local.ts",
     "node": "hardhat node",
     "clean": "hardhat clean"
   },
