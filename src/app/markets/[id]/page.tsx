@@ -11,9 +11,50 @@ import { Progress } from "../../../components/ui/progress"
 import { Separator } from "../../../components/ui/separator"
 import { TrendingUp, Users, Clock, ArrowLeft, Info, DollarSign, Wallet } from "lucide-react"
 import Link from "next/link"
+import { ethers } from 'ethers'
+import PrizePoolPredictionABI from "../../../app/abi/PrizePoolPrediction-abi.json"
+import { PrizePredictionContract } from "../../../app/abi/index"
+
+type Market = {
+  id: number
+  title: string
+  category: string
+  totalVolume: string
+  volumeNumeric: number
+  participants: number
+  odds: { yes: number; no: number }
+  endDate: string
+  timeLeft: string
+  timeLeftMs: number
+  endTime: number
+  resolutionTime: number
+  status: string
+  resolved: boolean
+  active: boolean
+  entryFee: string
+  entryFeeNumeric: number
+  createdBy: string
+  options: string[]
+  prizePool: string
+}
+
+type RecentBet = {
+  user: string
+  outcome: string
+  amount: string
+  odds: string
+  time: string
+  blockNumber: number
+}
 
 export default function MarketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [marketId, setMarketId] = useState<string>("")
+  const [market, setMarket] = useState<Market | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string>("")
+  const [recentBets, setRecentBets] = useState<RecentBet[]>([])
+  
+  // Betting state
   const [betAmount, setBetAmount] = useState("")
   const [selectedOutcome, setSelectedOutcome] = useState<"yes" | "no" | null>(null)
   const [isPlacingBet, setIsPlacingBet] = useState(false)
@@ -27,53 +68,226 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
     resolveParams()
   }, [params])
 
-  // Mock market data - in real app, fetch based on marketId
-  const market = {
-    id: 1,
-    title: "Bitcoin Price Above $100,000 by End of 2024",
-    description:
-      "This market resolves to YES if Bitcoin (BTC) trades above $100,000 USD on any major exchange (Coinbase, Binance, Kraken) before December 31, 2024, 11:59 PM UTC. The market will resolve based on publicly verifiable price data from these exchanges.",
-    category: "Crypto",
-    totalVolume: "2,450 CORE",
-    participants: 156,
-    odds: { yes: 0.65, no: 0.35 },
-    endDate: "Dec 31, 2024",
-    timeLeft: "45 days",
-    status: "active",
-    createdBy: "0x1234...5678",
-    createdAt: "Nov 15, 2024",
-    resolutionSource: "CoinGecko API, Coinbase Pro API",
-    minBet: "1 CORE",
-    maxBet: "1000 CORE",
+  // Fetch market data when marketId is available
+  useEffect(() => {
+    if (marketId) {
+      fetchMarketData()
+    }
+  }, [marketId])
+
+  const fetchMarketData = async () => {
+    try {
+      setLoading(true)
+      setError("")
+
+      if (!window.ethereum) {
+        setError("No ethereum wallet detected")
+        return
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum as any)
+      const contract = new ethers.Contract(PrizePredictionContract.address, PrizePoolPredictionABI, provider)
+      
+      // Check if contract exists
+      const code = await provider.getCode(PrizePredictionContract.address)
+      if (code === '0x') {
+        setError("Contract not found at address")
+        return
+      }
+
+      // Fetch prediction data
+      const pred = await contract.getPrediction(parseInt(marketId))
+      const stats = await contract.getAllOptionStats(parseInt(marketId))
+      
+      if (!pred || pred.options.length !== 2) {
+        setError("Market not found or not a binary market")
+        return
+      }
+
+      const totalParts = Number(pred.totalParticipants)
+      let odds = { yes: 0.5, no: 0.5 }
+      if (totalParts > 0) {
+        const yesCount = Number(stats.counts[0])
+        odds.yes = yesCount / totalParts
+        odds.no = 1 - odds.yes
+      }
+
+      const endTime = Number(pred.endTime)
+      const resolutionTime = Number(pred.resolutionTime)
+      const endDate = new Date(endTime * 1000).toLocaleDateString()
+      const timeLeftMs = endTime * 1000 - Date.now()
+      const timeLeft = timeLeftMs > 0 ? `${Math.floor(timeLeftMs / (86400 * 1000))} days` : 'Ended'
+      
+      const prizePoolWei = pred.prizePool
+      const entryFeeWei = pred.entryFee
+      const volumeNumeric = parseFloat(ethers.formatEther(prizePoolWei))
+      const entryFeeNumeric = parseFloat(ethers.formatEther(entryFeeWei))
+      const totalVolume = `${volumeNumeric.toFixed(2)} CORE`
+      const entryFee = `${entryFeeNumeric.toFixed(4)} CORE`
+
+      const marketData: Market = {
+        id: Number(pred.id),
+        title: pred.question,
+        category: "General", // Default category since not stored in contract
+        totalVolume,
+        volumeNumeric,
+        participants: totalParts,
+        odds,
+        endDate,
+        timeLeft,
+        timeLeftMs,
+        endTime,
+        resolutionTime,
+        status: pred.resolved ? "resolved" : (timeLeftMs > 0 && pred.active ? "active" : "inactive"),
+        resolved: pred.resolved,
+        active: pred.active,
+        entryFee,
+        entryFeeNumeric,
+        createdBy: pred.creator,
+        options: pred.options,
+        prizePool: totalVolume
+      }
+
+      setMarket(marketData)
+      
+      // Fetch recent bets/activities
+      await fetchRecentBets(contract, parseInt(marketId))
+      
+    } catch (err) {
+      console.error("Error fetching market data:", err)
+      setError("Failed to load market data")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const recentBets = [
-    { user: "0x1234...5678", outcome: "YES", amount: "50 CORE", odds: "65%", time: "2 mins ago" },
-    { user: "0x9876...4321", outcome: "NO", amount: "25 CORE", odds: "35%", time: "5 mins ago" },
-    { user: "0x5555...1111", outcome: "YES", amount: "100 CORE", odds: "64%", time: "8 mins ago" },
-    { user: "0x7777...9999", outcome: "NO", amount: "75 CORE", odds: "36%", time: "12 mins ago" },
-  ]
+  const fetchRecentBets = async (contract: ethers.Contract, predictionId: number) => {
+    try {
+      // Get recent bet events - you may need to adjust this based on your contract events
+      const provider = contract.runner?.provider
+      if (!provider) return
+
+      // Try to get recent blocks (last 100 blocks or so)
+      const currentBlock = await provider.getBlockNumber()
+      const fromBlock = Math.max(0, currentBlock - 1000) // Last ~1000 blocks
+      
+      // If your contract emits events for bets, filter for them
+      // This is a placeholder - adjust based on your actual events
+      const filter = contract.filters.BetPlaced?.(predictionId)
+      if (filter) {
+        const events = await contract.queryFilter(filter, fromBlock, currentBlock)
+        
+        const bets: RecentBet[] = []
+        for (const event of events.slice(-10)) { // Get last 10 bets
+          if ("args" in event && event.args) {
+            const block = await provider.getBlock(event.blockNumber)
+            const timeAgo = Math.floor((Date.now() - (block?.timestamp || 0) * 1000) / 60000) // minutes ago
+            
+            bets.push({
+              user: `${event.args[0]?.substring(0, 6)}...${event.args[0]?.substring(38)}`,
+              outcome: event.args[1] === 0 ? "YES" : "NO",
+              amount: `${parseFloat(ethers.formatEther(event.args[2] || 0)).toFixed(2)} CORE`,
+              odds: event.args[1] === 0 ? `${(market?.odds.yes || 0.5) * 100}%` : `${(market?.odds.no || 0.5) * 100}%`,
+              time: timeAgo < 60 ? `${timeAgo} mins ago` : `${Math.floor(timeAgo / 60)} hours ago`,
+              blockNumber: event.blockNumber
+            })
+          }
+        }
+        
+        setRecentBets(bets.reverse()) // Most recent first
+      }
+    } catch (err) {
+      console.error("Error fetching recent bets:", err)
+      // Don't set error state, just log it as this is not critical
+    }
+  }
 
   const handlePlaceBet = async () => {
-    if (!selectedOutcome || !betAmount) return
+    if (!selectedOutcome || !betAmount || !market) return
 
     setIsPlacingBet(true)
-    // Simulate bet placement
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsPlacingBet(false)
-    setBetAmount("")
-    setSelectedOutcome(null)
-    alert("Bet placed successfully!")
+    
+    try {
+      if (!window.ethereum) {
+        throw new Error("Wallet not connected")
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum as any)
+      const signer = await provider.getSigner()
+      const contract = new ethers.Contract(PrizePredictionContract.address, PrizePoolPredictionABI, signer)
+      
+      const optionIndex = selectedOutcome === "yes" ? 0 : 1
+      const betAmountWei = ethers.parseEther(betAmount)
+      const totalCost = betAmountWei + ethers.parseEther(market.entryFeeNumeric.toString())
+      
+      const tx = await contract.placeBet(market.id, optionIndex, betAmountWei, {
+        value: totalCost
+      })
+      
+      console.log("Bet transaction submitted:", tx.hash)
+      
+      // Wait for transaction to be mined
+      const receipt = await tx.wait()
+      console.log("Bet transaction confirmed:", receipt.hash)
+      
+      // Reset form
+      setBetAmount("")
+      setSelectedOutcome(null)
+      
+      // Refresh market data
+      setTimeout(() => {
+        fetchMarketData()
+      }, 2000)
+      
+      alert("Bet placed successfully!")
+      
+    } catch (err) {
+      console.error("Bet placement failed:", err)
+      alert(`Failed to place bet: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    } finally {
+      setIsPlacingBet(false)
+    }
   }
 
-  const potentialPayout =
-    betAmount && selectedOutcome ? (Number.parseFloat(betAmount) / market.odds[selectedOutcome]).toFixed(2) : "0"
+  const potentialPayout = betAmount && selectedOutcome && market
+    ? (parseFloat(betAmount) / market.odds[selectedOutcome]).toFixed(2)
+    : "0"
 
   // Show loading state while params are being resolved
-  if (!marketId) {
+  if (!marketId || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <div className="text-white">Loading market data...</div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-red-400 text-center">
+          <h2 className="text-xl mb-2">Error Loading Market</h2>
+          <p>{error}</p>
+          <Link href="/markets">
+            <Button className="mt-4">Back to Markets</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Show not found state
+  if (!market) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <h2 className="text-xl mb-2">Market Not Found</h2>
+          <p>The requested market could not be found.</p>
+          <Link href="/markets">
+            <Button className="mt-4">Back to Markets</Button>
+          </Link>
+        </div>
       </div>
     )
   }
@@ -130,12 +344,14 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                   </div>
                 </div>
                 <CardTitle className="text-2xl text-white leading-tight">{market.title}</CardTitle>
-                <CardDescription className="text-slate-300 text-base">{market.description}</CardDescription>
+                <CardDescription className="text-slate-300 text-base">
+                  Market ID: #{market.id} | Entry Fee: {market.entryFee}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <div className="text-slate-400 text-sm">Total Volume</div>
+                    <div className="text-slate-400 text-sm">Prize Pool</div>
                     <div className="text-white font-semibold text-lg">{market.totalVolume}</div>
                   </div>
                   <div>
@@ -150,8 +366,13 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                     <div className="text-white font-semibold text-lg">{market.endDate}</div>
                   </div>
                   <div>
-                    <div className="text-slate-400 text-sm">Created</div>
-                    <div className="text-white font-semibold text-lg">{market.createdAt}</div>
+                    <div className="text-slate-400 text-sm">Status</div>
+                    <div className={`font-semibold text-lg capitalize ${
+                      market.status === 'active' ? 'text-green-400' : 
+                      market.status === 'resolved' ? 'text-blue-400' : 'text-yellow-400'
+                    }`}>
+                      {market.status}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -165,12 +386,12 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-green-600/20 border border-green-600/30 rounded-lg p-6 text-center">
-                    <div className="text-green-400 font-semibold text-lg mb-2">YES</div>
+                    <div className="text-green-400 font-semibold text-lg mb-2">{market.options[0] || "YES"}</div>
                     <div className="text-white text-3xl font-bold mb-2">{(market.odds.yes * 100).toFixed(0)}%</div>
                     <Progress value={market.odds.yes * 100} className="h-2" />
                   </div>
                   <div className="bg-red-600/20 border border-red-600/30 rounded-lg p-6 text-center">
-                    <div className="text-red-400 font-semibold text-lg mb-2">NO</div>
+                    <div className="text-red-400 font-semibold text-lg mb-2">{market.options[1] || "NO"}</div>
                     <div className="text-white text-3xl font-bold mb-2">{(market.odds.no * 100).toFixed(0)}%</div>
                     <Progress value={market.odds.no * 100} className="h-2" />
                   </div>
@@ -197,23 +418,36 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                   <CardContent className="pt-6">
                     <div className="space-y-4">
                       <div>
-                        <Label className="text-slate-300">Resolution Source</Label>
-                        <p className="text-white">{market.resolutionSource}</p>
+                        <Label className="text-slate-300">Market Creator</Label>
+                        <p className="text-white font-mono">{market.createdBy}</p>
                       </div>
                       <Separator className="bg-slate-700" />
                       <div>
-                        <Label className="text-slate-300">Created By</Label>
-                        <p className="text-white font-mono">{market.createdBy}</p>
+                        <Label className="text-slate-300">Resolution Time</Label>
+                        <p className="text-white">{new Date(market.resolutionTime * 1000).toLocaleString()}</p>
                       </div>
                       <Separator className="bg-slate-700" />
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label className="text-slate-300">Min Bet</Label>
-                          <p className="text-white">{market.minBet}</p>
+                          <Label className="text-slate-300">Entry Fee</Label>
+                          <p className="text-white">{market.entryFee}</p>
                         </div>
                         <div>
-                          <Label className="text-slate-300">Max Bet</Label>
-                          <p className="text-white">{market.maxBet}</p>
+                          <Label className="text-slate-300">Market Active</Label>
+                          <p className={market.active ? "text-green-400" : "text-red-400"}>
+                            {market.active ? "Yes" : "No"}
+                          </p>
+                        </div>
+                      </div>
+                      <Separator className="bg-slate-700" />
+                      <div>
+                        <Label className="text-slate-300">Available Options</Label>
+                        <div className="flex gap-2 mt-1">
+                          {market.options.map((option, index) => (
+                            <Badge key={index} variant="secondary" className="bg-slate-700 text-white">
+                              {option}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -225,20 +459,29 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                 <Card className="bg-slate-800/50 border-slate-700">
                   <CardContent className="pt-6">
                     <div className="space-y-4">
-                      {recentBets.map((bet, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <Badge variant={bet.outcome === "YES" ? "default" : "destructive"} className="text-xs">
-                              {bet.outcome}
-                            </Badge>
-                            <span className="text-white font-mono text-sm">{bet.user}</span>
+                      {recentBets.length > 0 ? (
+                        recentBets.map((bet, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <Badge 
+                                variant={bet.outcome === "YES" ? "default" : "destructive"} 
+                                className="text-xs"
+                              >
+                                {bet.outcome}
+                              </Badge>
+                              <span className="text-white font-mono text-sm">{bet.user}</span>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-white font-semibold">{bet.amount}</div>
+                              <div className="text-slate-400 text-sm">{bet.time}</div>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-white font-semibold">{bet.amount}</div>
-                            <div className="text-slate-400 text-sm">{bet.time}</div>
-                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-slate-400 py-8">
+                          No recent activity found
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -251,27 +494,27 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                       <div className="flex items-start space-x-2">
                         <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                         <div>
-                          <h4 className="text-white font-semibold mb-1">Resolution Criteria</h4>
+                          <h4 className="text-white font-semibold mb-1">Betting Rules</h4>
                           <p>
-                            This market will resolve to YES if Bitcoin trades above $100,000 on any of the specified
-                            exchanges before the end date.
+                            Each bet requires an entry fee of {market.entryFee} plus your bet amount. The entry fee goes to the prize pool.
                           </p>
                         </div>
                       </div>
                       <div className="flex items-start space-x-2">
                         <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                         <div>
-                          <h4 className="text-white font-semibold mb-1">Data Sources</h4>
-                          <p>Price data will be sourced from CoinGecko API and Coinbase Pro API for verification.</p>
+                          <h4 className="text-white font-semibold mb-1">Resolution</h4>
+                          <p>
+                            This market will be resolved by the creator or through the platform's resolution mechanism after the end time.
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start space-x-2">
                         <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                         <div>
-                          <h4 className="text-white font-semibold mb-1">Dispute Period</h4>
+                          <h4 className="text-white font-semibold mb-1">Payouts</h4>
                           <p>
-                            There is a 24-hour dispute period after initial resolution where users can challenge the
-                            outcome.
+                            Winners will receive their proportional share of the prize pool based on their bet amount and the total winning pool.
                           </p>
                         </div>
                       </div>
@@ -292,95 +535,116 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Outcome Selection */}
-                <div>
-                  <Label className="text-slate-300 mb-2 block">Select Outcome</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant={selectedOutcome === "yes" ? "default" : "outline"}
-                      className={`${
-                        selectedOutcome === "yes"
-                          ? "bg-green-600 hover:bg-green-700"
-                          : "border-green-600 text-green-400 hover:bg-green-600/20"
-                      }`}
-                      onClick={() => setSelectedOutcome("yes")}
-                    >
-                      YES {(market.odds.yes * 100).toFixed(0)}%
-                    </Button>
-                    <Button
-                      variant={selectedOutcome === "no" ? "default" : "outline"}
-                      className={`${
-                        selectedOutcome === "no"
-                          ? "bg-red-600 hover:bg-red-700"
-                          : "border-red-600 text-red-400 hover:bg-red-600/20"
-                      }`}
-                      onClick={() => setSelectedOutcome("no")}
-                    >
-                      NO {(market.odds.no * 100).toFixed(0)}%
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Bet Amount */}
-                <div>
-                  <Label htmlFor="betAmount" className="text-slate-300 mb-2 block">
-                    Bet Amount (CORE)
-                  </Label>
-                  <Input
-                    id="betAmount"
-                    type="number"
-                    placeholder="Enter amount"
-                    value={betAmount}
-                    onChange={(e) => setBetAmount(e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white"
-                    min="1"
-                    max="1000"
-                  />
-                  <div className="flex justify-between text-sm text-slate-400 mt-1">
-                    <span>Min: {market.minBet}</span>
-                    <span>Max: {market.maxBet}</span>
-                  </div>
-                </div>
-
-                {/* Quick Amount Buttons */}
-                <div className="grid grid-cols-4 gap-2">
-                  {["10", "25", "50", "100"].map((amount) => (
-                    <Button
-                      key={amount}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setBetAmount(amount)}
-                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                    >
-                      {amount}
-                    </Button>
-                  ))}
-                </div>
-
-                {/* Potential Payout */}
-                {betAmount && selectedOutcome && (
-                  <div className="bg-slate-700/50 rounded-lg p-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-300">Potential Payout:</span>
-                      <span className="text-white font-semibold">{potentialPayout} CORE</span>
+                {market.status === 'active' ? (
+                  <>
+                    {/* Outcome Selection */}
+                    <div>
+                      <Label className="text-slate-300 mb-2 block">Select Outcome</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          variant={selectedOutcome === "yes" ? "default" : "outline"}
+                          className={`${
+                            selectedOutcome === "yes"
+                              ? "bg-green-600 hover:bg-green-700"
+                              : "border-green-600 text-green-400 hover:bg-green-600/20"
+                          }`}
+                          onClick={() => setSelectedOutcome("yes")}
+                        >
+                          {market.options[0]} {(market.odds.yes * 100).toFixed(0)}%
+                        </Button>
+                        <Button
+                          variant={selectedOutcome === "no" ? "default" : "outline"}
+                          className={`${
+                            selectedOutcome === "no"
+                              ? "bg-red-600 hover:bg-red-700"
+                              : "border-red-600 text-red-400 hover:bg-red-600/20"
+                          }`}
+                          onClick={() => setSelectedOutcome("no")}
+                        >
+                          {market.options[1]} {(market.odds.no * 100).toFixed(0)}%
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-300">Potential Profit:</span>
-                      <span className="text-green-400 font-semibold">
-                        {(Number.parseFloat(potentialPayout) - Number.parseFloat(betAmount)).toFixed(2)} CORE
-                      </span>
+
+                    {/* Bet Amount */}
+                    <div>
+                      <Label htmlFor="betAmount" className="text-slate-300 mb-2 block">
+                        Bet Amount (CORE)
+                      </Label>
+                      <Input
+                        id="betAmount"
+                        type="number"
+                        placeholder="Enter amount"
+                        value={betAmount}
+                        onChange={(e) => setBetAmount(e.target.value)}
+                        className="bg-slate-700 border-slate-600 text-white"
+                        min="0.01"
+                        step="0.01"
+                      />
+                      <div className="text-sm text-slate-400 mt-1">
+                        Entry fee: {market.entryFee} (added automatically)
+                      </div>
                     </div>
+
+                    {/* Quick Amount Buttons */}
+                    <div className="grid grid-cols-4 gap-2">
+                      {["1", "5", "10", "25"].map((amount) => (
+                        <Button
+                          key={amount}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setBetAmount(amount)}
+                          className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                        >
+                          {amount}
+                        </Button>
+                      ))}
+                    </div>
+
+                    {/* Cost Breakdown */}
+                    {betAmount && selectedOutcome && (
+                      <div className="bg-slate-700/50 rounded-lg p-3 space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-300">Bet Amount:</span>
+                          <span className="text-white">{betAmount} CORE</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-300">Entry Fee:</span>
+                          <span className="text-white">{market.entryFee}</span>
+                        </div>
+                        <Separator className="bg-slate-600" />
+                        <div className="flex justify-between text-sm font-semibold">
+                          <span className="text-slate-300">Total Cost:</span>
+                          <span className="text-white">
+                            {(parseFloat(betAmount) + market.entryFeeNumeric).toFixed(4)} CORE
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-300">Potential Payout:</span>
+                          <span className="text-green-400 font-semibold">{potentialPayout} CORE</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Place Bet Button */}
+                    <Button
+                      onClick={handlePlaceBet}
+                      disabled={!selectedOutcome || !betAmount || isPlacingBet || parseFloat(betAmount) <= 0}
+                      className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+                    >
+                      {isPlacingBet ? "Placing Bet..." : "Place Bet"}
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-slate-400 mb-4">
+                      {market.status === 'resolved' ? 'This market has been resolved' : 'This market is not active'}
+                    </p>
+                    <Link href="/markets">
+                      <Button variant="outline">View Other Markets</Button>
+                    </Link>
                   </div>
                 )}
-
-                {/* Place Bet Button */}
-                <Button
-                  onClick={handlePlaceBet}
-                  disabled={!selectedOutcome || !betAmount || isPlacingBet}
-                  className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
-                >
-                  {isPlacingBet ? "Placing Bet..." : "Place Bet"}
-                </Button>
 
                 <p className="text-xs text-slate-400 text-center">
                   By placing a bet, you agree to the market rules and terms of service.
