@@ -300,7 +300,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
             <div className="w-8 h-8 bg-gradient-to-r from-black-500 to-blue-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">CorePredict</span>
+            <span className="text-xl font-bold text-white">CoreOracle</span>
           </Link>
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="/markets" className="text-slate-300 hover:text-white transition-colors">

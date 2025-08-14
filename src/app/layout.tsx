@@ -12,7 +12,7 @@ const pridi = Pridi({
 })
 
 export const metadata: Metadata = {
-  title: "CorePredict",
+  title: "CoreOracle",
   description: "Predict the Future, Earn Rewards.",
 }
 

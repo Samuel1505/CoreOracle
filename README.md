@@ -1,8 +1,8 @@
-# CorePredict - Decentralized Prediction Market
+# CoreOracle - Decentralized Prediction Market
 
 A modern, full-featured decentralized prediction market built on Core Blockchain where users can make predictions on various future events and earn CORE tokens for accurate predictions.
 
-![CorePredict Banner](/placeholder.svg?height=400&width=800&query=CorePredict%20decentralized%20prediction%20market%20banner)
+![CoreOracle Banner](/placeholder.svg?height=400&width=800&query=CoreOracle%20decentralized%20prediction%20market%20banner)
 
 ## 🌟 Features
 
@@ -40,8 +40,8 @@ Before running this project, make sure you have the following installed:
 
 1. **Clone the repository**
    \`\`\`bash
-   git clone https://github.com/your-username/corepredict.git
-   cd corepredict
+   git clone https://github.com/your-username/CoreOracle.git
+   cd CoreOracle
    \`\`\`
 
 2. **Install dependencies**
@@ -64,7 +64,7 @@ Before running this project, make sure you have the following installed:
 ## 🏗️ Project Structure
 
 \`\`\`
-corepredict/
+CoreOracle/
 ├── app/                          # Next.js App Router
 │   ├── dashboard/               # User dashboard pages
 │   ├── leaderboard/            # Leaderboard pages
@@ -235,7 +235,7 @@ npm start
 
 ## 🤝 Contributing
 
-We welcome contributions to CorePredict! Please follow these steps:
+We welcome contributions to CoreOracle! Please follow these steps:
 
 1. **Fork the repository**
 2. **Create a feature branch** (\`git checkout -b feature/amazing-feature\`)
