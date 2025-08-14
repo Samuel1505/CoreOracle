@@ -154,12 +154,12 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-black">
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-black-500 to-blue-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold text-white">CorePredict</span>
@@ -175,7 +175,7 @@ export default function LeaderboardPage() {
               Leaderboard
             </Link>
           </nav>
-          <Button className="bg-green-600 hover:bg-green-700">
+          <Button className="bg-blue-600 hover:bg-blue-700">
             <Wallet className="w-4 h-4 mr-2" />
             Connected
           </Button>
@@ -198,7 +198,7 @@ export default function LeaderboardPage() {
                 variant={timeframe === period ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setTimeframe(period)}
-                className={timeframe === period ? "bg-purple-600" : "text-slate-300 hover:text-white"}
+                className={timeframe === period ? "bg-blue-600" : "text-slate-300 hover:text-white"}
                 disabled={period !== "all-time"} // Only all-time supported
               >
                 {period.charAt(0).toUpperCase() + period.slice(1).replace("-", " ")}
@@ -210,15 +210,15 @@ export default function LeaderboardPage() {
         {/* Leaderboard Tabs */}
         <Tabs defaultValue="accuracy" className="space-y-6">
           <TabsList className="bg-slate-800 border-slate-700 grid w-full grid-cols-3">
-            <TabsTrigger value="accuracy" className="data-[state=active]:bg-purple-600">
+            <TabsTrigger value="accuracy" className="data-[state=active]:bg-blue-600">
               <Trophy className="w-4 h-4 mr-2" />
               Top Predictors
             </TabsTrigger>
-            <TabsTrigger value="earnings" className="data-[state=active]:bg-purple-600">
+            <TabsTrigger value="earnings" className="data-[state=active]:bg-blue-600">
               <TrendingUp className="w-4 h-4 mr-2" />
               Top Earners
             </TabsTrigger>
-            <TabsTrigger value="participation" className="data-[state=active]:bg-purple-600">
+            <TabsTrigger value="participation" className="data-[state=active]:bg-blue-600">
               <Users className="w-4 h-4 mr-2" />
               Most Active
             </TabsTrigger>

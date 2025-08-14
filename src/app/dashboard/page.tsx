@@ -151,12 +151,12 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-black">
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-black-500 to-blue-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold text-white">CorePredict</span>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
               Leaderboard
             </Link>
           </nav>
-          <Button className="bg-green-600 hover:bg-green-700">
+          <Button className="bg-blue-600 hover:bg-blue-700">
             <Wallet className="w-4 h-4 mr-2" />
             Connected
           </Button>
@@ -240,13 +240,13 @@ export default function DashboardPage() {
         {/* Main Content */}
         <Tabs defaultValue="active" className="space-y-6">
           <TabsList className="bg-slate-800 border-slate-700">
-            <TabsTrigger value="active" className="data-[state=active]:bg-purple-600">
+            <TabsTrigger value="active" className="data-[state=active]:bg-blue-600">
               Active Bets ({activeBets.length})
             </TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-purple-600">
+            <TabsTrigger value="history" className="data-[state=active]:bg-blue-600">
               Bet History
             </TabsTrigger>
-            <TabsTrigger value="achievements" className="data-[state=active]:bg-purple-600">
+            <TabsTrigger value="achievements" className="data-[state=active]:bg-blue-600">
               Achievements
             </TabsTrigger>
           </TabsList>
@@ -414,7 +414,7 @@ export default function DashboardPage() {
                               // Refresh data
                               window.location.reload();
                             }}
-                            className="w-full bg-purple-600 hover:bg-purple-700"
+                            className="w-full bg-blue-600 hover:bg-blue-700"
                           >
                             Claim Prize
                           </Button>
@@ -441,13 +441,13 @@ export default function DashboardPage() {
               {achievements.map((achievement, index) => (
                 <Card
                   key={index}
-                  className={`bg-slate-800/50 border-slate-700 ${achievement.earned ? "ring-2 ring-purple-500/50" : ""}`}
+                  className={`bg-slate-800/50 border-slate-700 ${achievement.earned ? "ring-2 ring-blue-500/50" : ""}`}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center space-x-4">
                       <div
                         className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                          achievement.earned ? "bg-purple-600" : "bg-slate-700"
+                          achievement.earned ? "bg-blue-600" : "bg-slate-700"
                         }`}
                       >
                         <Trophy className={`w-6 h-6 ${achievement.earned ? "text-white" : "text-slate-400"}`} />
