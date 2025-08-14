@@ -40,12 +40,12 @@ export default function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-black">
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-black-500 to-blue-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold text-white">CorePredict</span>
@@ -71,7 +71,7 @@ export default function HomePage() {
         <div className="container mx-auto text-center">
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
             Predict the Future,
-            <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-black-400 to-blue-400 bg-clip-text text-transparent">
               {" "}
               Earn Rewards
             </span>
@@ -82,7 +82,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/markets">
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-3">
+              <Button size="lg" className="bg-blue-600 hover:bg-purple-700 text-lg px-8 py-3">
                 Explore Markets
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
@@ -130,7 +130,7 @@ export default function HomePage() {
             {featuredMarkets.map((market) => (
               <Card
                 key={market.id}
-                className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors"
+                className="bg-black-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors"
               >
                 <CardHeader>
                   <div className="flex items-center justify-between mb-2">
@@ -162,7 +162,7 @@ export default function HomePage() {
                       </div>
                     </div>
                     <Link href={`/markets/${market.id}`}>
-                      <Button className="w-full bg-purple-600 hover:bg-purple-700">Place Bet</Button>
+                      <Button className="w-full bg-blue-600 hover:bg-purple-700">Place Bet</Button>
                     </Link>
                   </div>
                 </CardContent>
@@ -178,7 +178,7 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-white mb-12 text-center">Why Choose CorePredict?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Shield className="w-8 h-8 text-purple-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">Secure & Transparent</h3>
@@ -187,14 +187,14 @@ export default function HomePage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="w-8 h-8 text-purple-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">High Rewards</h3>
               <p className="text-slate-400">Earn CORE tokens for accurate predictions with competitive reward rates.</p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Trophy className="w-8 h-8 text-purple-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">Competitive</h3>

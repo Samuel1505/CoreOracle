@@ -255,7 +255,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
   // Show loading state while params are being resolved
   if (!marketId || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white">Loading market data...</div>
       </div>
     )
@@ -264,7 +264,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
   // Show error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-red-400 text-center">
           <h2 className="text-xl mb-2">Error Loading Market</h2>
           <p>{error}</p>
@@ -279,7 +279,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
   // Show not found state
   if (!market) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white text-center">
           <h2 className="text-xl mb-2">Market Not Found</h2>
           <p>The requested market could not be found.</p>
@@ -292,12 +292,12 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-black">
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-black-500 to-blue-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold text-white">CorePredict</span>
@@ -313,7 +313,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
               Leaderboard
             </Link>
           </nav>
-          <Button className="bg-green-600 hover:bg-green-700">
+          <Button className="bg-blue-600 hover:bg-blue-700">
             <Wallet className="w-4 h-4 mr-2" />
             Connected
           </Button>
@@ -401,13 +401,13 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
             {/* Market Details */}
             <Tabs defaultValue="details" className="w-full">
               <TabsList className="bg-slate-800 border-slate-700">
-                <TabsTrigger value="details" className="data-[state=active]:bg-purple-600">
+                <TabsTrigger value="details" className="data-[state=active]:bg-blue-600">
                   Details
                 </TabsTrigger>
-                <TabsTrigger value="activity" className="data-[state=active]:bg-purple-600">
+                <TabsTrigger value="activity" className="data-[state=active]:bg-blue-600">
                   Recent Activity
                 </TabsTrigger>
-                <TabsTrigger value="rules" className="data-[state=active]:bg-purple-600">
+                <TabsTrigger value="rules" className="data-[state=active]:bg-blue-600">
                   Rules
                 </TabsTrigger>
               </TabsList>
@@ -597,7 +597,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                     <Button
                       onClick={handlePlaceBet}
                       disabled={!selectedOutcome || isPlacingBet}
-                      className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                     >
                       {isPlacingBet ? "Submitting Prediction..." : "Submit Prediction"}
                     </Button>

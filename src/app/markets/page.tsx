@@ -204,12 +204,12 @@ export default function MarketsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-black">
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-black-500 to-blue-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold text-white">CorePredict</span>
@@ -281,7 +281,7 @@ export default function MarketsPage() {
         <div className="flex justify-end mb-4">
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-purple-600 hover:bg-purple-700" disabled={isCreating}>
+              <Button className="bg-blue-600 hover:bg-purple-700" disabled={isCreating}>
                 {isCreating ? "Creating..." : "Create New Prediction"}
               </Button>
             </DialogTrigger>
@@ -369,13 +369,13 @@ export default function MarketsPage() {
         {/* Market Tabs */}
         <Tabs defaultValue="active" className="mb-8">
           <TabsList className="bg-slate-800 border-slate-700">
-            <TabsTrigger value="active" className="data-[state=active]:bg-purple-600">
+            <TabsTrigger value="active" className="data-[state=active]:bg-blue-600">
               Active Markets ({activeMarkets.length})
             </TabsTrigger>
-            <TabsTrigger value="ending" className="data-[state=active]:bg-purple-600">
+            <TabsTrigger value="ending" className="data-[state=active]:bg-blue-600">
               Ending Soon ({endingMarkets.length})
             </TabsTrigger>
-            <TabsTrigger value="resolved" className="data-[state=active]:bg-purple-600">
+            <TabsTrigger value="resolved" className="data-[state=active]:bg-blue-600">
               Resolved ({resolvedMarkets.length})
             </TabsTrigger>
           </TabsList>
@@ -385,11 +385,11 @@ export default function MarketsPage() {
               {activeMarkets.map((market) => (
                 <Card
                   key={market.id}
-                  className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors"
+                  className="bg-black-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors"
                 >
                   <CardHeader>
                     <div className="flex items-center justify-between mb-2">
-                      <Badge variant="secondary" className="bg-purple-600/20 text-purple-300">
+                      <Badge variant="secondary" className="bg-blue-600/20 text-purple-300">
                         {market.category}
                       </Badge>
                       <div className="flex items-center text-slate-400 text-sm">
@@ -420,7 +420,7 @@ export default function MarketsPage() {
                         </div>
                       </div>
                       <Link href={`/markets/${market.id}`}>
-                        <Button className="w-full bg-purple-600 hover:bg-purple-700">Place Bet</Button>
+                        <Button className="w-full bg-blue-600 hover:bg-purple-700">Place Bet</Button>
                       </Link>
                     </div>
                   </CardContent>
@@ -469,7 +469,7 @@ export default function MarketsPage() {
                         </div>
                       </div>
                       <Link href={`/markets/${market.id}`}>
-                        <Button className="w-full bg-purple-600 hover:bg-purple-700">Place Bet</Button>
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700">Place Bet</Button>
                       </Link>
                     </div>
                   </CardContent>
