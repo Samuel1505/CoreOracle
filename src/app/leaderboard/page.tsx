@@ -1,99 +1,127 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
 import { Badge } from "../../components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 import { Avatar, AvatarFallback } from "../../components/ui/avatar"
-import { TrendingUp, Trophy, Medal, Award, Crown, Wallet } from "lucide-react"
+import { TrendingUp, Trophy, Medal, Award, Crown, Wallet, Users } from "lucide-react"
 import Link from "next/link"
+import { ethers } from 'ethers';
+import PrizePoolPredictionABI from "../../app/abi/PrizePoolPrediction-abi.json";
+import {PrizePredictionContract} from "../../app/abi/index";
+
+type Leader = {
+  rank: number;
+  address: string;
+  winRate?: string; // Only for accuracyLeaders
+  totalEarnings: string;
+  totalBets: number;
+  streak: number;
+  badge: string;
+};
 
 export default function LeaderboardPage() {
   const [timeframe, setTimeframe] = useState("all-time")
+  const [accuracyLeaders, setAccuracyLeaders] = useState<Leader[]>([])
+  const [winningsLeaders, setWinningsLeaders] = useState<Leader[]>([])
+  const [participationLeaders, setParticipationLeaders] = useState<Leader[]>([])
 
-  const topPredictors = [
-    {
-      rank: 1,
-      address: "0x1234...5678",
-      username: "CryptoOracle",
-      totalEarnings: "15,420.50",
-      winRate: 89.2,
-      totalBets: 156,
-      streak: 12,
-      badge: "Legendary",
-    },
-    {
-      rank: 2,
-      address: "0x9876...4321",
-      username: "MarketMaster",
-      totalEarnings: "12,890.25",
-      winRate: 85.7,
-      totalBets: 203,
-      streak: 8,
-      badge: "Expert",
-    },
-    {
-      rank: 3,
-      address: "0x5555...1111",
-      username: "PredictPro",
-      totalEarnings: "11,245.75",
-      winRate: 82.4,
-      totalBets: 189,
-      streak: 15,
-      badge: "Expert",
-    },
-    {
-      rank: 4,
-      address: "0x7777...9999",
-      username: "FutureSeeker",
-      totalEarnings: "9,876.30",
-      winRate: 78.9,
-      totalBets: 145,
-      streak: 5,
-      badge: "Advanced",
-    },
-    {
-      rank: 5,
-      address: "0x3333...7777",
-      username: "TrendSpotter",
-      totalEarnings: "8,654.20",
-      winRate: 76.3,
-      totalBets: 167,
-      streak: 3,
-      badge: "Advanced",
-    },
-  ]
+  useEffect(() => {
+    async function fetchLeaderboards() {
+      if (!window.ethereum) return;
+      const provider = new ethers.BrowserProvider(window.ethereum as any);
+      const contract = new ethers.Contract(PrizePredictionContract.address, PrizePoolPredictionABI, provider);
 
-  const topEarners = [
-    {
-      rank: 1,
-      address: "0x1111...2222",
-      username: "WhalePredictor",
-      totalEarnings: "25,890.75",
-      totalVolume: "45,230.50",
-      biggestWin: "2,450.00",
-      badge: "Whale",
-    },
-    {
-      rank: 2,
-      address: "0x2222...3333",
-      username: "HighRoller",
-      totalEarnings: "18,765.25",
-      totalVolume: "38,920.80",
-      biggestWin: "1,890.50",
-      badge: "High Roller",
-    },
-    {
-      rank: 3,
-      address: "0x4444...5555",
-      username: "BigBetter",
-      totalEarnings: "16,543.90",
-      totalVolume: "32,100.25",
-      biggestWin: "1,650.75",
-      badge: "High Roller",
-    },
-  ]
+      // Fetch accuracy leaderboard
+      const [accUsers, accPercentages, accTotalPreds] = await contract.getAccuracyLeaderboard();
+      const accData: Leader[] = [];
+      for (let i = 0; i < accUsers.length; i++) {
+        const stats = await contract.getUserStats(accUsers[i]);
+        accData.push({
+          rank: i + 1,
+          address: accUsers[i],
+          winRate: (Number(accPercentages[i]) / 100).toFixed(1),
+          totalEarnings: ethers.formatEther(stats.totalWinnings),
+          totalBets: Number(stats.totalPredictions),
+          streak: Number(stats.currentStreak),
+          badge: getBadgeForAccuracy(Number(accPercentages[i]) / 100),
+        });
+      }
+      setAccuracyLeaders(accData);
+
+      // Fetch winnings leaderboard
+      const [winUsers, winTotals, winStreaks] = await contract.getWinningsLeaderboard();
+      const winData: Leader[] = [];
+      for (let i = 0; i < winUsers.length; i++) {
+        const stats = await contract.getUserStats(winUsers[i]);
+        winData.push({
+          rank: i + 1,
+          address: winUsers[i],
+          totalEarnings: ethers.formatEther(winTotals[i]),
+          totalBets: Number(stats.totalPredictions), // Using total predictions as proxy for volume
+          streak: Number(winStreaks[i]),
+          badge: getBadgeForWinnings(Number(ethers.formatEther(winTotals[i]))),
+        });
+      }
+      setWinningsLeaders(winData);
+
+      // Fetch participation leaderboard
+      const events = await contract.queryFilter(contract.filters.PredictionSubmitted());
+      const userCounts: {[key: string]: number} = {};
+      for (const event of events) {
+        if ("args" in event && event.args && typeof event.args.user === "string") {
+          const user = event.args.user;
+          userCounts[user] = (userCounts[user] || 0) + 1;
+        }
+      }
+      const sortedUsers = Object.entries(userCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(e => e[0]);
+      const partData: Leader[] = [];
+      for (let i = 0; i < sortedUsers.length; i++) {
+        const addr = sortedUsers[i];
+        const stats = await contract.getUserStats(addr);
+        const accuracy = Number(stats.totalPredictions) > 0 
+          ? (Number(stats.correctPredictions) * 100 / Number(stats.totalPredictions)).toFixed(1) 
+          : '0.0';
+        partData.push({
+          rank: i + 1,
+          address: addr,
+          totalEarnings: ethers.formatEther(stats.totalWinnings),
+          totalBets: userCounts[addr],
+          streak: Number(stats.currentStreak),
+          badge: getBadgeForParticipation(userCounts[addr]),
+        });
+      }
+      setParticipationLeaders(partData);
+    }
+    fetchLeaderboards();
+  }, []);
+
+  const getBadgeForAccuracy = (winRate: number) => {
+    if (winRate >= 90) return "Legendary";
+    if (winRate >= 80) return "Expert";
+    if (winRate >= 70) return "Advanced";
+    return "Novice";
+  }
+
+  const getBadgeForWinnings = (earnings: number) => {
+    if (earnings >= 20) return "Whale";
+    if (earnings >= 10) return "High Roller";
+    return "Investor";
+  }
+
+  const getBadgeForParticipation = (bets: number) => {
+    if (bets >= 100) return "Legendary";
+    if (bets >= 50) return "Expert";
+    if (bets >= 20) return "Advanced";
+    return "Novice";
+  }
+
+  const shortenAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -161,7 +189,7 @@ export default function LeaderboardPage() {
           <p className="text-slate-300">Top predictors and highest earners on CorePredict</p>
         </div>
 
-        {/* Timeframe Selection */}
+        {/* Timeframe Selection - Note: Contract only supports all-time */}
         <div className="flex justify-center mb-8">
           <div className="flex bg-slate-800 rounded-lg p-1">
             {["all-time", "monthly", "weekly"].map((period) => (
@@ -171,6 +199,7 @@ export default function LeaderboardPage() {
                 size="sm"
                 onClick={() => setTimeframe(period)}
                 className={timeframe === period ? "bg-purple-600" : "text-slate-300 hover:text-white"}
+                disabled={period !== "all-time"} // Only all-time supported
               >
                 {period.charAt(0).toUpperCase() + period.slice(1).replace("-", " ")}
               </Button>
@@ -180,7 +209,7 @@ export default function LeaderboardPage() {
 
         {/* Leaderboard Tabs */}
         <Tabs defaultValue="accuracy" className="space-y-6">
-          <TabsList className="bg-slate-800 border-slate-700 grid w-full grid-cols-2">
+          <TabsList className="bg-slate-800 border-slate-700 grid w-full grid-cols-3">
             <TabsTrigger value="accuracy" className="data-[state=active]:bg-purple-600">
               <Trophy className="w-4 h-4 mr-2" />
               Top Predictors
@@ -189,12 +218,16 @@ export default function LeaderboardPage() {
               <TrendingUp className="w-4 h-4 mr-2" />
               Top Earners
             </TabsTrigger>
+            <TabsTrigger value="participation" className="data-[state=active]:bg-purple-600">
+              <Users className="w-4 h-4 mr-2" />
+              Most Active
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="accuracy" className="space-y-4">
             {/* Top 3 Podium */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              {topPredictors.slice(0, 3).map((predictor, index) => (
+              {accuracyLeaders.slice(0, 3).map((predictor, index) => (
                 <Card
                   key={predictor.rank}
                   className={`bg-slate-800/50 border-slate-700 ${
@@ -207,8 +240,7 @@ export default function LeaderboardPage() {
                 >
                   <CardHeader className="text-center pb-3">
                     <div className="flex justify-center mb-2">{getRankIcon(predictor.rank)}</div>
-                    <CardTitle className="text-white text-lg">{predictor.username}</CardTitle>
-                    <CardDescription className="font-mono text-slate-400">{predictor.address}</CardDescription>
+                    <CardTitle className="text-white text-lg">{shortenAddress(predictor.address)}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center space-y-3">
                     <div>
@@ -242,7 +274,7 @@ export default function LeaderboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {topPredictors.slice(3).map((predictor) => (
+                  {accuracyLeaders.slice(3).map((predictor) => (
                     <div
                       key={predictor.rank}
                       className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg"
@@ -251,12 +283,11 @@ export default function LeaderboardPage() {
                         <div className="flex items-center justify-center w-8 h-8">{getRankIcon(predictor.rank)}</div>
                         <Avatar className="w-10 h-10">
                           <AvatarFallback className="bg-purple-600 text-white">
-                            {predictor.username.slice(0, 2).toUpperCase()}
+                            {shortenAddress(predictor.address).slice(2,4).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="text-white font-semibold">{predictor.username}</div>
-                          <div className="text-slate-400 text-sm font-mono">{predictor.address}</div>
+                          <div className="text-white font-semibold">{shortenAddress(predictor.address)}</div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-6 text-right">
@@ -285,18 +316,17 @@ export default function LeaderboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {topEarners.map((earner) => (
+                  {winningsLeaders.map((earner) => (
                     <div key={earner.rank} className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center justify-center w-8 h-8">{getRankIcon(earner.rank)}</div>
                         <Avatar className="w-10 h-10">
                           <AvatarFallback className="bg-indigo-600 text-white">
-                            {earner.username.slice(0, 2).toUpperCase()}
+                            {shortenAddress(earner.address).slice(2,4).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="text-white font-semibold">{earner.username}</div>
-                          <div className="text-slate-400 text-sm font-mono">{earner.address}</div>
+                          <div className="text-white font-semibold">{shortenAddress(earner.address)}</div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-6 text-right">
@@ -305,14 +335,90 @@ export default function LeaderboardPage() {
                           <div className="text-slate-400 text-sm">Total Earnings</div>
                         </div>
                         <div>
-                          <div className="text-white font-semibold">{earner.totalVolume} CORE</div>
-                          <div className="text-slate-400 text-sm">Volume</div>
-                        </div>
-                        <div>
-                          <div className="text-yellow-400 font-semibold">{earner.biggestWin} CORE</div>
-                          <div className="text-slate-400 text-sm">Biggest Win</div>
+                          <div className="text-white font-semibold">{earner.totalBets} Bets</div>
+                          <div className="text-slate-400 text-sm">Total Bets</div>
                         </div>
                         <Badge className={`${getBadgeColor(earner.badge)} text-white`}>{earner.badge}</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="participation" className="space-y-4">
+            {/* Top 3 Podium */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              {participationLeaders.slice(0, 3).map((predictor, index) => (
+                <Card
+                  key={predictor.rank}
+                  className={`bg-slate-800/50 border-slate-700 ${
+                    index === 0
+                      ? "ring-2 ring-yellow-500/50"
+                      : index === 1
+                        ? "ring-2 ring-gray-400/50"
+                        : "ring-2 ring-amber-600/50"
+                  }`}
+                >
+                  <CardHeader className="text-center pb-3">
+                    <div className="flex justify-center mb-2">{getRankIcon(predictor.rank)}</div>
+                    <CardTitle className="text-white text-lg">{shortenAddress(predictor.address)}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center space-y-3">
+                    <div>
+                      <div className="text-2xl font-bold text-white">{predictor.totalBets}</div>
+                      <div className="text-slate-400 text-sm">Predictions</div>
+                    </div>
+                    <div>
+                      <div className="text-xl font-semibold text-green-400">{predictor.totalEarnings} CORE</div>
+                      <div className="text-slate-400 text-sm">Total Earnings</div>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <div>
+                        <div className="text-white font-semibold">{predictor.streak}</div>
+                        <div className="text-slate-400">Streak</div>
+                      </div>
+                    </div>
+                    <Badge className={`${getBadgeColor(predictor.badge)} text-white`}>{predictor.badge}</Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Rest of the leaderboard */}
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white">Full Leaderboard</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {participationLeaders.slice(3).map((predictor) => (
+                    <div
+                      key={predictor.rank}
+                      className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center justify-center w-8 h-8">{getRankIcon(predictor.rank)}</div>
+                        <Avatar className="w-10 h-10">
+                          <AvatarFallback className="bg-purple-600 text-white">
+                            {shortenAddress(predictor.address).slice(2,4).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="text-white font-semibold">{shortenAddress(predictor.address)}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-6 text-right">
+                        <div>
+                          <div className="text-white font-semibold">{predictor.totalBets}</div>
+                          <div className="text-slate-400 text-sm">Predictions</div>
+                        </div>
+                        <div>
+                          <div className="text-green-400 font-semibold">{predictor.totalEarnings} CORE</div>
+                          <div className="text-slate-400 text-sm">Earnings</div>
+                        </div>
+                        <Badge className={`${getBadgeColor(predictor.badge)} text-white`}>{predictor.badge}</Badge>
                       </div>
                     </div>
                   ))}

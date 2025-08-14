@@ -203,7 +203,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
   }
 
   const handlePlaceBet = async () => {
-    if (!selectedOutcome || !betAmount || !market) return
+    if (!selectedOutcome || !market) return
 
     setIsPlacingBet(true)
     
@@ -216,12 +216,15 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
       const signer = await provider.getSigner()
       const contract = new ethers.Contract(PrizePredictionContract.address, PrizePoolPredictionABI, signer)
       
+      // Use the correct function name and parameters
       const optionIndex = selectedOutcome === "yes" ? 0 : 1
-      const betAmountWei = ethers.parseEther(betAmount)
-      const totalCost = betAmountWei + ethers.parseEther(market.entryFeeNumeric.toString())
+      const entryFeeWei = ethers.parseEther(market.entryFeeNumeric.toString())
       
-      const tx = await contract.placeBet(market.id, optionIndex, betAmountWei, {
-        value: totalCost
+      // Call submitPrediction instead of placeBet
+      // Parameters: (uint256 predictionId, uint256 selectedOption)
+      // The entry fee should be sent as value
+      const tx = await contract.submitPrediction(market.id, optionIndex, {
+        value: entryFeeWei // Only send the entry fee as value
       })
       
       console.log("Bet transaction submitted:", tx.hash)
@@ -239,19 +242,15 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
         fetchMarketData()
       }, 2000)
       
-      alert("Bet placed successfully!")
+      alert("Prediction submitted successfully!")
       
     } catch (err) {
       console.error("Bet placement failed:", err)
-      alert(`Failed to place bet: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      alert(`Failed to submit prediction: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setIsPlacingBet(false)
     }
   }
-
-  const potentialPayout = betAmount && selectedOutcome && market
-    ? (parseFloat(betAmount) / market.odds[selectedOutcome]).toFixed(2)
-    : "0"
 
   // Show loading state while params are being resolved
   if (!marketId || loading) {
@@ -494,9 +493,9 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                       <div className="flex items-start space-x-2">
                         <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                         <div>
-                          <h4 className="text-white font-semibold mb-1">Betting Rules</h4>
+                          <h4 className="text-white font-semibold mb-1">Prediction Rules</h4>
                           <p>
-                            Each bet requires an entry fee of {market.entryFee} plus your bet amount. The entry fee goes to the prize pool.
+                            To participate, pay the entry fee of {market.entryFee} and select your prediction option. Your entry fee goes to the prize pool.
                           </p>
                         </div>
                       </div>
@@ -514,7 +513,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                         <div>
                           <h4 className="text-white font-semibold mb-1">Payouts</h4>
                           <p>
-                            Winners will receive their proportional share of the prize pool based on their bet amount and the total winning pool.
+                            Winners will receive their proportional share of the prize pool. All participants who chose the winning option split the total prize pool equally.
                           </p>
                         </div>
                       </div>
@@ -531,7 +530,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
               <CardHeader>
                 <CardTitle className="text-white flex items-center">
                   <DollarSign className="w-5 h-5 mr-2" />
-                  Place Your Bet
+                  Make Your Prediction
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -539,7 +538,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                   <>
                     {/* Outcome Selection */}
                     <div>
-                      <Label className="text-slate-300 mb-2 block">Select Outcome</Label>
+                      <Label className="text-slate-300 mb-2 block">Select Your Prediction</Label>
                       <div className="grid grid-cols-2 gap-2">
                         <Button
                           variant={selectedOutcome === "yes" ? "default" : "outline"}
@@ -566,73 +565,41 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                       </div>
                     </div>
 
-                    {/* Bet Amount */}
-                    <div>
-                      <Label htmlFor="betAmount" className="text-slate-300 mb-2 block">
-                        Bet Amount (CORE)
-                      </Label>
-                      <Input
-                        id="betAmount"
-                        type="number"
-                        placeholder="Enter amount"
-                        value={betAmount}
-                        onChange={(e) => setBetAmount(e.target.value)}
-                        className="bg-slate-700 border-slate-600 text-white"
-                        min="0.01"
-                        step="0.01"
-                      />
-                      <div className="text-sm text-slate-400 mt-1">
-                        Entry fee: {market.entryFee} (added automatically)
-                      </div>
-                    </div>
-
-                    {/* Quick Amount Buttons */}
-                    <div className="grid grid-cols-4 gap-2">
-                      {["1", "5", "10", "25"].map((amount) => (
-                        <Button
-                          key={amount}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setBetAmount(amount)}
-                          className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                        >
-                          {amount}
-                        </Button>
-                      ))}
-                    </div>
-
                     {/* Cost Breakdown */}
-                    {betAmount && selectedOutcome && (
+                    {selectedOutcome && (
                       <div className="bg-slate-700/50 rounded-lg p-3 space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-300">Bet Amount:</span>
-                          <span className="text-white">{betAmount} CORE</span>
-                        </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-300">Entry Fee:</span>
                           <span className="text-white">{market.entryFee}</span>
                         </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-300">Selected Option:</span>
+                          <span className="text-white">{selectedOutcome === "yes" ? market.options[0] : market.options[1]}</span>
+                        </div>
                         <Separator className="bg-slate-600" />
                         <div className="flex justify-between text-sm font-semibold">
                           <span className="text-slate-300">Total Cost:</span>
-                          <span className="text-white">
-                            {(parseFloat(betAmount) + market.entryFeeNumeric).toFixed(4)} CORE
-                          </span>
+                          <span className="text-white">{market.entryFee}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-300">Potential Payout:</span>
-                          <span className="text-green-400 font-semibold">{potentialPayout} CORE</span>
+                          <span className="text-slate-300">Potential Share:</span>
+                          <span className="text-green-400 font-semibold">
+                            {selectedOutcome === "yes" 
+                              ? `${(market.odds.yes * 100).toFixed(1)}% of prize pool`
+                              : `${(market.odds.no * 100).toFixed(1)}% of prize pool`
+                            }
+                          </span>
                         </div>
                       </div>
                     )}
 
-                    {/* Place Bet Button */}
+                    {/* Submit Prediction Button */}
                     <Button
                       onClick={handlePlaceBet}
-                      disabled={!selectedOutcome || !betAmount || isPlacingBet || parseFloat(betAmount) <= 0}
+                      disabled={!selectedOutcome || isPlacingBet}
                       className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
                     >
-                      {isPlacingBet ? "Placing Bet..." : "Place Bet"}
+                      {isPlacingBet ? "Submitting Prediction..." : "Submit Prediction"}
                     </Button>
                   </>
                 ) : (
@@ -647,7 +614,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                 )}
 
                 <p className="text-xs text-slate-400 text-center">
-                  By placing a bet, you agree to the market rules and terms of service.
+                  By submitting a prediction, you agree to the market rules and terms of service.
                 </p>
               </CardContent>
             </Card>
