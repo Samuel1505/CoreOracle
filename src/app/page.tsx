@@ -48,7 +48,7 @@ export default function HomePage() {
             <div className="w-8 h-8 bg-gradient-to-r from-black-500 to-blue-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">CorePredict</span>
+            <span className="text-xl font-bold text-white">CoreOracle</span>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="/markets" className="text-slate-300 hover:text-white transition-colors">
@@ -175,7 +175,7 @@ export default function HomePage() {
       {/* Features Section */}
       <section className="py-16 px-4">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-white mb-12 text-center">Why Choose CorePredict?</h2>
+          <h2 className="text-3xl font-bold text-white mb-12 text-center">Why Choose CoreOracle?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -209,7 +209,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-slate-800 bg-slate-900/50 py-8 px-4">
         <div className="container mx-auto text-center text-slate-400">
-          <p>&copy; 2024 CorePredict. Built on Core Blockchain.</p>
+          <p>&copy; 2024 CoreOracle. Built on Core Blockchain.</p>
         </div>
       </footer>
     </div>
