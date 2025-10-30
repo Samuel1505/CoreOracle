@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -25,14 +26,11 @@ import {
   Coins,
   Activity,
   Globe,
-  Gamepad2,
   Briefcase,
   Film,
   Cpu,
   ChevronRight,
-  ExternalLink,
   ChevronDown,
-  TrendingDown,
   Clock,
   Sparkles,
 } from "lucide-react"
@@ -275,70 +273,146 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section with Animated Background */}
-      <section className="relative py-32 px-4 overflow-hidden">
+      <section className="relative py-40 px-4 overflow-hidden">
         {/* Animated Gradient Mesh Background */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-primary rounded-full blur-3xl animate-float"></div>
-          <div className="absolute top-0 right-0 w-96 h-96 bg-secondary rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }}></div>
-          <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-accent rounded-full blur-3xl animate-float" style={{ animationDelay: "4s" }}></div>
+        <div className="absolute inset-0 opacity-40">
+          <motion.div 
+            className="absolute top-0 left-0 w-[600px] h-[600px] bg-primary rounded-full blur-3xl"
+            animate={{
+              x: [0, 50, 0],
+              y: [0, -30, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          <motion.div 
+            className="absolute top-0 right-0 w-[600px] h-[600px] bg-secondary rounded-full blur-3xl"
+            animate={{
+              x: [0, -50, 0],
+              y: [0, 30, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1
+            }}
+          />
+          <motion.div 
+            className="absolute bottom-0 left-1/2 w-[600px] h-[600px] bg-accent rounded-full blur-3xl"
+            animate={{
+              x: [-50, 50, -50],
+              y: [0, -20, 0],
+              scale: [1, 1.15, 1],
+            }}
+            transition={{
+              duration: 12,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 2
+            }}
+          />
         </div>
 
         <div className="container mx-auto text-center relative z-10">
-          <div className="animate-fade-in">
-            <Badge className="mb-6 bg-primary/20 text-primary border-primary/30 px-4 py-2">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Built on Core Blockchain
-            </Badge>
-            <h1 className="heading-hero text-text-primary mb-6 max-w-5xl mx-auto">
-              Predict the Future,
-              <span className="gradient-text"> Earn Rewards</span>
-            </h1>
-            <p className="body-lg text-text-secondary mb-10 max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <Badge className="mb-8 bg-primary/20 text-primary border-primary/30 px-5 py-2.5 text-sm animate-pulse-glow">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Built on Core Blockchain
+              </Badge>
+            </motion.div>
+            
+            <motion.h1 
+              className="heading-hero text-text-primary mb-8 max-w-5xl mx-auto"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              Predict. Compete.
+              <br />
+              <span className="gradient-text">Earn Rewards.</span>
+            </motion.h1>
+            
+            <motion.p 
+              className="body-lg text-text-secondary mb-12 max-w-3xl mx-auto leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+            >
               Join the most advanced decentralized prediction market on Core Blockchain. Make predictions on crypto,
-              sports, politics, and more. Earn CORE tokens for accurate predictions.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              sports, finance, and more. Earn CORE tokens for accurate predictions and build your winning streak.
+            </motion.p>
+            
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
+            >
               <Link href="/markets">
-                <Button size="lg" className="gradient-primary text-lg px-8 py-6 hover-glow">
-                  Explore Markets
+                <Button size="lg" className="gradient-primary text-lg px-10 py-7 hover-glow-intense font-semibold">
+                  Launch App
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
               <Button
                 size="lg"
                 variant="outline"
-                className="text-lg px-8 py-6 border-border text-text-secondary hover:bg-background-card bg-transparent"
+                className="text-lg px-10 py-7 border-border text-text-secondary hover:bg-background-card bg-transparent hover-lift"
               >
                 Learn More
               </Button>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Floating Preview Cards */}
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {featuredMarkets.slice(0, 3).map((market, index) => (
-              <div
+              <motion.div
                 key={market.id}
-                className="glass-card p-4 hover-lift animate-slide-up"
-                style={{ animationDelay: `${index * 0.2}s` }}
+                className="glass-card p-5 hover-lift cursor-pointer"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.9 + index * 0.15 }}
+                whileHover={{ scale: 1.05 }}
               >
-                <Badge className="mb-2 bg-primary/20 text-primary border-primary/30">{market.category}</Badge>
-                <p className="text-text-primary text-sm font-semibold mb-3 line-clamp-2">{market.title}</p>
+                <Badge className="mb-3 bg-primary/20 text-primary border-primary/30">{market.category}</Badge>
+                <p className="text-text-primary text-sm font-semibold mb-4 line-clamp-2 leading-tight">{market.title}</p>
                 <div className="flex justify-between text-xs">
                   <span className="text-text-secondary">Volume</span>
-                  <span className="text-text-primary font-semibold">{market.totalVolume}</span>
+                  <span className="text-primary font-bold">{market.totalVolume}</span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Live Activity Feed */}
-      <section className="py-16 px-4 bg-background-card/30">
+      <section className="py-20 px-4 bg-background-card/30">
         <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <Badge className="mb-4 bg-success/20 text-success border-success/30">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <Badge className="mb-4 bg-success/20 text-success border-success/30 animate-pulse-glow">
               <Activity className="w-4 h-4 mr-2 animate-pulse-slow" />
               Live Activity
             </Badge>
@@ -346,14 +420,22 @@ export default function HomePage() {
             <p className="body-lg text-text-secondary max-w-2xl mx-auto">
               See what other predictors are doing right now
             </p>
-          </div>
+          </motion.div>
 
-          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-5">
             {liveActivity.map((activity, index) => (
-              <div key={index} className="glass-card p-4 hover-lift animate-slide-up" style={{ animationDelay: `${index * 0.1}s` }}>
+              <motion.div 
+                key={index} 
+                className="glass-card p-5 hover-lift"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ scale: 1.02 }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <Avatar className="w-10 h-10">
+                    <Avatar className="w-11 h-11 ring-2 ring-primary/20">
                       <AvatarImage src={activity.avatar} alt={activity.user} />
                       <AvatarFallback>{activity.user[0]}</AvatarFallback>
                     </Avatar>
@@ -363,80 +445,114 @@ export default function HomePage() {
                     </div>
                   </div>
                   {activity.outcome === "won" && (
-                    <Badge className="bg-success/20 text-success border-success/30">
+                    <Badge className="bg-success/20 text-success border-success/30 animate-pulse-glow">
                       <Trophy className="w-3 h-3 mr-1" />
                       Won
                     </Badge>
                   )}
                 </div>
-                <div className="mt-3 pl-13">
+                <div className="mt-4 pl-14">
                   <p className="text-text-secondary text-sm">
                     {activity.action} on <span className="text-text-primary font-semibold">{activity.market}</span>
                   </p>
                   <p className="text-primary font-bold text-sm mt-1">{activity.amount}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="py-20 px-4">
+      <section className="py-24 px-4">
         <div className="container mx-auto">
-          <div className="text-center mb-16">
+          <motion.div 
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             <h2 className="heading-xl text-text-primary mb-4">How It Works</h2>
             <p className="body-lg text-text-secondary max-w-2xl mx-auto">
               Get started in 4 simple steps
             </p>
-          </div>
+          </motion.div>
 
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 relative">
             {/* Connecting Lines */}
-            <div className="hidden md:block absolute top-1/4 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent opacity-30"></div>
+            <div className="hidden md:block absolute top-1/4 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-accent opacity-20 rounded-full"></div>
 
             {howItWorksSteps.map((step, index) => (
-              <div key={step.number} className="relative animate-slide-up" style={{ animationDelay: `${index * 0.15}s` }}>
-                <div className="glass-card p-8 text-center hover-lift relative z-10">
-                  <div className="w-20 h-20 gradient-primary rounded-full flex items-center justify-center mx-auto mb-6 relative">
-                    <step.icon className="w-10 h-10 text-white" />
-                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-accent rounded-full flex items-center justify-center text-white font-bold text-sm">
+              <motion.div 
+                key={step.number} 
+                className="relative"
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.15 }}
+              >
+                <motion.div 
+                  className="glass-card p-8 text-center hover-lift relative z-10"
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <motion.div 
+                    className="w-24 h-24 gradient-primary rounded-full flex items-center justify-center mx-auto mb-6 relative"
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <step.icon className="w-12 h-12 text-white" />
+                    <div className="absolute -top-2 -right-2 w-10 h-10 bg-accent rounded-full flex items-center justify-center text-white font-bold text-base shadow-lg">
                       {step.number}
                     </div>
-                  </div>
+                  </motion.div>
                   <h3 className="heading-md text-text-primary mb-3">{step.title}</h3>
-                  <p className="text-text-secondary text-sm">{step.description}</p>
-                </div>
-              </div>
+                  <p className="text-text-secondary text-sm leading-relaxed">{step.description}</p>
+                </motion.div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Market Categories Showcase */}
-      <section className="py-20 px-4 bg-background-card/30">
+      <section className="py-24 px-4 bg-background-card/30">
         <div className="container mx-auto">
-          <div className="text-center mb-16">
+          <motion.div 
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             <h2 className="heading-xl text-text-primary mb-4">Explore Categories</h2>
             <p className="body-lg text-text-secondary max-w-2xl mx-auto">
               Predict outcomes across diverse markets
             </p>
-          </div>
+          </motion.div>
 
           <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {categories.slice(1).map((category, index) => {
               const Icon = category.icon
               return (
-                <div
+                <motion.div
                   key={category.id}
-                  className="glass-card p-6 text-center hover-lift cursor-pointer animate-scale-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+                  className="glass-card p-7 text-center hover-lift cursor-pointer"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.08 }}
+                  whileHover={{ scale: 1.08, y: -5 }}
                 >
-                  <div className={`w-16 h-16 bg-gradient-to-br ${category.color} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
-                    <Icon className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-text-primary font-semibold">{category.name}</h3>
-                </div>
+                  <motion.div 
+                    className={`w-18 h-18 bg-gradient-to-br ${category.color} rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg`}
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <Icon className="w-9 h-9 text-white" />
+                  </motion.div>
+                  <h3 className="text-text-primary font-semibold text-base">{category.name}</h3>
+                </motion.div>
               )
             })}
           </div>
@@ -444,70 +560,110 @@ export default function HomePage() {
       </section>
 
       {/* Enhanced Stats Dashboard */}
-      <section className="py-20 px-4">
+      <section className="py-24 px-4">
         <div className="container mx-auto">
-          <div className="text-center mb-16">
+          <motion.div 
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             <h2 className="heading-xl text-text-primary mb-4">Platform Statistics</h2>
             <p className="body-lg text-text-secondary max-w-2xl mx-auto">
               Join thousands of predictors worldwide
             </p>
-          </div>
+          </motion.div>
 
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="glass-card p-8 text-center hover-lift">
-              <DollarSign className="w-12 h-12 text-primary mx-auto mb-4" />
-              <div className="text-5xl font-bold text-text-primary mb-2">$2.4M</div>
-              <div className="text-text-secondary">Total Volume</div>
-              <div className="mt-2 flex items-center justify-center text-success text-sm">
+            <motion.div 
+              className="glass-card-intense p-10 text-center hover-lift"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0 }}
+              whileHover={{ scale: 1.05 }}
+            >
+              <DollarSign className="w-14 h-14 text-primary mx-auto mb-5" />
+              <div className="text-5xl font-bold text-text-primary mb-3 gradient-text">$2.4M</div>
+              <div className="text-text-secondary font-medium mb-3">Total Volume</div>
+              <div className="flex items-center justify-center text-success text-sm font-semibold">
                 <TrendingUp className="w-4 h-4 mr-1" />
                 +12.5% this week
               </div>
-            </div>
-            <div className="glass-card p-8 text-center hover-lift">
-              <Users className="w-12 h-12 text-secondary mx-auto mb-4" />
-              <div className="text-5xl font-bold text-text-primary mb-2">15.4K</div>
-              <div className="text-text-secondary">Active Users</div>
-              <div className="mt-2 flex items-center justify-center text-success text-sm">
+            </motion.div>
+            <motion.div 
+              className="glass-card-intense p-10 text-center hover-lift"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              whileHover={{ scale: 1.05 }}
+            >
+              <Users className="w-14 h-14 text-secondary mx-auto mb-5" />
+              <div className="text-5xl font-bold text-text-primary mb-3 gradient-text">15.4K</div>
+              <div className="text-text-secondary font-medium mb-3">Active Users</div>
+              <div className="flex items-center justify-center text-success text-sm font-semibold">
                 <TrendingUp className="w-4 h-4 mr-1" />
                 +8.3% this week
               </div>
-            </div>
-            <div className="glass-card p-8 text-center hover-lift">
-              <BarChart className="w-12 h-12 text-accent mx-auto mb-4" />
-              <div className="text-5xl font-bold text-text-primary mb-2">847</div>
-              <div className="text-text-secondary">Markets Created</div>
-              <div className="mt-2 flex items-center justify-center text-success text-sm">
+            </motion.div>
+            <motion.div 
+              className="glass-card-intense p-10 text-center hover-lift"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              whileHover={{ scale: 1.05 }}
+            >
+              <BarChart className="w-14 h-14 text-accent mx-auto mb-5" />
+              <div className="text-5xl font-bold text-text-primary mb-3 gradient-text">847</div>
+              <div className="text-text-secondary font-medium mb-3">Markets Created</div>
+              <div className="flex items-center justify-center text-success text-sm font-semibold">
                 <TrendingUp className="w-4 h-4 mr-1" />
                 +15 today
               </div>
-            </div>
-            <div className="glass-card p-8 text-center hover-lift">
-              <Target className="w-12 h-12 text-warning mx-auto mb-4" />
-              <div className="text-5xl font-bold text-text-primary mb-2">94.2%</div>
-              <div className="text-text-secondary">Accuracy Rate</div>
-              <div className="mt-2 flex items-center justify-center text-success text-sm">
+            </motion.div>
+            <motion.div 
+              className="glass-card-intense p-10 text-center hover-lift"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              whileHover={{ scale: 1.05 }}
+            >
+              <Target className="w-14 h-14 text-warning mx-auto mb-5" />
+              <div className="text-5xl font-bold text-text-primary mb-3 gradient-text">94.2%</div>
+              <div className="text-text-secondary font-medium mb-3">Accuracy Rate</div>
+              <div className="flex items-center justify-center text-success text-sm font-semibold">
                 <CheckCircle className="w-4 h-4 mr-1" />
                 Top performers
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Featured Markets with Filters */}
-      <section className="py-20 px-4 bg-background-card/30">
+      <section className="py-24 px-4 bg-background-card/30">
         <div className="container mx-auto">
-          <div className="text-center mb-12">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             <h2 className="heading-xl text-text-primary mb-4">Featured Markets</h2>
             <p className="body-lg text-text-secondary max-w-2xl mx-auto">
               Trending prediction markets with high activity
             </p>
-          </div>
+          </motion.div>
 
           <Tabs defaultValue="all" className="max-w-6xl mx-auto" onValueChange={setActiveCategory}>
-            <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 mb-8 bg-background-card/50">
+            <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 mb-10 bg-background-card/50 p-1.5 rounded-2xl">
               {categories.map((cat) => (
-                <TabsTrigger key={cat.id} value={cat.id} className="text-xs md:text-sm">
+                <TabsTrigger key={cat.id} value={cat.id} className="text-xs md:text-sm rounded-xl data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                   {cat.name}
                 </TabsTrigger>
               ))}
@@ -515,14 +671,21 @@ export default function HomePage() {
 
             <TabsContent value={activeCategory}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredMarkets.map((market) => (
-                  <Card key={market.id} className="glass-card border-border hover:glass-card-hover transition-all">
-                    <CardHeader>
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge className="bg-primary/20 text-primary border-primary/30">{market.category}</Badge>
+                {filteredMarkets.map((market, index) => (
+                  <motion.div
+                    key={market.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                  <Card className="glass-card border-border hover:glass-card-hover transition-all h-full">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <Badge className="bg-primary/20 text-primary border-primary/30 px-3 py-1">{market.category}</Badge>
                         <div className="flex items-center space-x-2">
                           {market.trending && (
-                            <Badge className="bg-danger/20 text-danger border-danger/30">
+                            <Badge className="bg-danger/20 text-danger border-danger/30 animate-pulse-glow">
                               <TrendingUp className="w-3 h-3 mr-1" />
                               Hot
                             </Badge>
@@ -533,59 +696,79 @@ export default function HomePage() {
                           </div>
                         </div>
                       </div>
-                      <CardTitle className="text-text-primary text-lg leading-tight">{market.title}</CardTitle>
-                      <CardDescription className="text-text-secondary flex items-center">
+                      <CardTitle className="text-text-primary text-lg leading-tight mb-2">{market.title}</CardTitle>
+                      <CardDescription className="text-text-secondary flex items-center text-sm">
                         <Clock className="w-3 h-3 mr-1" />
                         Ends: {market.endDate}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <span className="text-text-secondary">Total Volume</span>
-                          <span className="text-text-primary font-semibold">{market.totalVolume}</span>
+                        <div className="flex justify-between items-center py-2">
+                          <span className="text-text-secondary text-sm">Total Volume</span>
+                          <span className="text-primary font-bold">{market.totalVolume}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-success/20 border border-success/30 rounded-lg p-3 text-center hover-lift cursor-pointer">
-                            <div className="text-success font-semibold">YES</div>
-                            <div className="text-text-primary text-lg">{(market.odds.yes * 100).toFixed(0)}%</div>
-                          </div>
-                          <div className="bg-danger/20 border border-danger/30 rounded-lg p-3 text-center hover-lift cursor-pointer">
-                            <div className="text-danger font-semibold">NO</div>
-                            <div className="text-text-primary text-lg">{(market.odds.no * 100).toFixed(0)}%</div>
-                          </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <motion.div 
+                            className="bg-success/20 border border-success/30 rounded-xl p-4 text-center cursor-pointer"
+                            whileHover={{ scale: 1.05, backgroundColor: "rgba(16, 185, 129, 0.3)" }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <div className="text-success font-bold text-sm mb-1">YES</div>
+                            <div className="text-text-primary text-xl font-bold">{(market.odds.yes * 100).toFixed(0)}%</div>
+                          </motion.div>
+                          <motion.div 
+                            className="bg-danger/20 border border-danger/30 rounded-xl p-4 text-center cursor-pointer"
+                            whileHover={{ scale: 1.05, backgroundColor: "rgba(239, 68, 68, 0.3)" }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <div className="text-danger font-bold text-sm mb-1">NO</div>
+                            <div className="text-text-primary text-xl font-bold">{(market.odds.no * 100).toFixed(0)}%</div>
+                          </motion.div>
                         </div>
                         <Link href={`/markets/${market.id}`}>
-                          <Button className="w-full gradient-primary hover-glow">Place Bet</Button>
+                          <Button className="w-full gradient-primary hover-glow-intense font-semibold py-6">Place Bet</Button>
                         </Link>
                       </div>
                     </CardContent>
                   </Card>
+                  </motion.div>
                 ))}
               </div>
             </TabsContent>
           </Tabs>
 
-          <div className="text-center mt-12">
+          <motion.div 
+            className="text-center mt-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             <Link href="/markets">
-              <Button size="lg" variant="outline" className="border-border text-text-secondary hover:bg-background-card">
+              <Button size="lg" variant="outline" className="border-border text-text-secondary hover:bg-background-card hover-lift px-8 py-6">
                 View All Markets
                 <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Rewards & Leaderboard Preview */}
-      <section className="py-20 px-4">
+      <section className="py-24 px-4">
         <div className="container mx-auto">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16">
             {/* Rewards */}
-            <div>
-              <div className="mb-8">
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="mb-10">
                 <h2 className="heading-lg text-text-primary mb-4">Earn Rewards</h2>
-                <p className="text-text-secondary">
+                <p className="text-text-secondary text-lg">
                   Climb the ranks and unlock exclusive rewards
                 </p>
               </div>
@@ -600,80 +783,115 @@ export default function HomePage() {
                 ].map((tier, index) => {
                   const Icon = tier.icon
                   return (
-                    <div key={tier.tier} className="glass-card p-4 hover-lift animate-slide-up" style={{ animationDelay: `${index * 0.1}s` }}>
+                    <motion.div 
+                      key={tier.tier} 
+                      className="glass-card p-5 hover-lift cursor-pointer"
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      whileHover={{ scale: 1.03, x: 10 }}
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                          <div className={`w-12 h-12 bg-gradient-to-br ${tier.color} rounded-full flex items-center justify-center`}>
-                            <Icon className="w-6 h-6 text-white" />
-                          </div>
+                          <motion.div 
+                            className={`w-14 h-14 bg-gradient-to-br ${tier.color} rounded-full flex items-center justify-center shadow-lg`}
+                            whileHover={{ rotate: 360 }}
+                            transition={{ duration: 0.6 }}
+                          >
+                            <Icon className="w-7 h-7 text-white" />
+                          </motion.div>
                           <div>
-                            <h3 className="text-text-primary font-semibold">{tier.tier} Tier</h3>
+                            <h3 className="text-text-primary font-bold text-lg">{tier.tier} Tier</h3>
                             <p className="text-text-secondary text-sm">{tier.min}+ CORE earned</p>
                           </div>
                         </div>
                         <ChevronRight className="w-5 h-5 text-text-secondary" />
                       </div>
-                    </div>
+                    </motion.div>
                   )
                 })}
               </div>
-            </div>
+            </motion.div>
 
             {/* Leaderboard */}
-            <div>
-              <div className="mb-8">
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="mb-10">
                 <h2 className="heading-lg text-text-primary mb-4">Top Predictors</h2>
-                <p className="text-text-secondary">
+                <p className="text-text-secondary text-lg">
                   Compete with the best and earn your spot
                 </p>
               </div>
 
-              <div className="glass-card p-6">
+              <div className="glass-card-intense p-7">
                 <div className="space-y-4">
                   {leaderboard.map((user, index) => (
-                    <div key={user.rank} className="flex items-center justify-between p-3 rounded-lg hover:bg-background-card/50 transition-colors">
+                    <motion.div 
+                      key={user.rank} 
+                      className="flex items-center justify-between p-4 rounded-xl hover:bg-background-card/50 transition-all cursor-pointer"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      whileHover={{ scale: 1.02, backgroundColor: "rgba(30, 41, 59, 0.6)" }}
+                    >
                       <div className="flex items-center space-x-4">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                          user.rank === 1 ? "bg-gradient-to-br from-yellow-500 to-yellow-300 text-white" :
-                          user.rank === 2 ? "bg-gradient-to-br from-gray-400 to-gray-300 text-white" :
-                          user.rank === 3 ? "bg-gradient-to-br from-orange-700 to-orange-500 text-white" :
-                          "bg-background-card text-text-secondary"
-                        }`}>
+                        <motion.div 
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base shadow-lg ${
+                            user.rank === 1 ? "bg-gradient-to-br from-yellow-500 to-yellow-300 text-white" :
+                            user.rank === 2 ? "bg-gradient-to-br from-gray-400 to-gray-300 text-white" :
+                            user.rank === 3 ? "bg-gradient-to-br from-orange-700 to-orange-500 text-white" :
+                            "bg-background-card text-text-secondary"
+                          }`}
+                          whileHover={{ scale: 1.2, rotate: 360 }}
+                          transition={{ duration: 0.4 }}
+                        >
                           {user.rank}
-                        </div>
-                        <Avatar className="w-10 h-10">
+                        </motion.div>
+                        <Avatar className="w-11 h-11 ring-2 ring-primary/20">
                           <AvatarImage src={user.avatar} alt={user.user} />
                           <AvatarFallback>{user.user[0]}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="text-text-primary font-semibold">{user.user}</p>
+                          <p className="text-text-primary font-bold">{user.user}</p>
                           <p className="text-text-secondary text-sm">{user.accuracy} accuracy</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-primary font-bold">{user.earnings}</p>
+                        <p className="text-primary font-bold text-lg">{user.earnings}</p>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
                 <Link href="/leaderboard">
-                  <Button className="w-full mt-6 gradient-primary hover-glow">
+                  <Button className="w-full mt-8 gradient-primary hover-glow-intense font-semibold py-6 text-base">
                     View Full Leaderboard
-                    <Trophy className="w-4 h-4 ml-2" />
+                    <Trophy className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Trust & Security */}
-      <section className="py-20 px-4 bg-background-card/30">
+      <section className="py-24 px-4 bg-background-card/30">
         <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <Badge className="mb-4 bg-success/20 text-success border-success/30">
+          <motion.div 
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <Badge className="mb-4 bg-success/20 text-success border-success/30 animate-pulse-glow px-4 py-2">
               <Shield className="w-4 h-4 mr-2" />
               Secure & Transparent
             </Badge>
@@ -681,7 +899,7 @@ export default function HomePage() {
             <p className="body-lg text-text-secondary max-w-2xl mx-auto">
               Your security is our priority
             </p>
-          </div>
+          </motion.div>
 
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -703,13 +921,25 @@ export default function HomePage() {
             ].map((feature, index) => {
               const Icon = feature.icon
               return (
-                <div key={index} className="glass-card p-8 text-center hover-lift animate-slide-up" style={{ animationDelay: `${index * 0.15}s` }}>
-                  <div className="w-16 h-16 gradient-primary rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Icon className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="heading-md text-text-primary mb-3">{feature.title}</h3>
-                  <p className="text-text-secondary">{feature.description}</p>
-                </div>
+                <motion.div 
+                  key={index} 
+                  className="glass-card p-10 text-center hover-lift"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: index * 0.15 }}
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <motion.div 
+                    className="w-20 h-20 gradient-primary rounded-full flex items-center justify-center mx-auto mb-7 shadow-lg"
+                    whileHover={{ rotate: 360, scale: 1.1 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <Icon className="w-10 h-10 text-white" />
+                  </motion.div>
+                  <h3 className="heading-md text-text-primary mb-4">{feature.title}</h3>
+                  <p className="text-text-secondary leading-relaxed">{feature.description}</p>
+                </motion.div>
               )
             })}
           </div>
@@ -717,39 +947,53 @@ export default function HomePage() {
       </section>
 
       {/* Success Stories Carousel */}
-      <section className="py-20 px-4">
+      <section className="py-24 px-4">
         <div className="container mx-auto">
-          <div className="text-center mb-16">
+          <motion.div 
+            className="text-center mb-20"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             <h2 className="heading-xl text-text-primary mb-4">Success Stories</h2>
             <p className="body-lg text-text-secondary max-w-2xl mx-auto">
               Hear from our top predictors
             </p>
-          </div>
+          </motion.div>
 
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <div key={index} className="glass-card p-6 hover-lift animate-scale-in" style={{ animationDelay: `${index * 0.15}s` }}>
-                <div className="flex items-center space-x-4 mb-4">
-                  <Avatar className="w-12 h-12">
+              <motion.div 
+                key={index} 
+                className="glass-card p-7 hover-lift"
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.15 }}
+                whileHover={{ scale: 1.05, y: -5 }}
+              >
+                <div className="flex items-center space-x-4 mb-5">
+                  <Avatar className="w-14 h-14 ring-2 ring-primary/30">
                     <AvatarImage src={testimonial.avatar} alt={testimonial.user} />
                     <AvatarFallback>{testimonial.user[0]}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-text-primary font-semibold">{testimonial.user}</p>
+                    <p className="text-text-primary font-bold">{testimonial.user}</p>
                     <p className="text-text-secondary text-sm">{testimonial.role}</p>
                   </div>
                 </div>
-                <div className="flex mb-3">
+                <div className="flex mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-warning fill-warning" />
+                    <Star key={i} className="w-5 h-5 text-warning fill-warning" />
                   ))}
                 </div>
-                <p className="text-text-secondary mb-4 italic">"{testimonial.content}"</p>
-                <div className="flex items-center justify-between pt-4 border-t border-border">
-                  <span className="text-text-secondary text-sm">Total Earned</span>
-                  <span className="text-primary font-bold">{testimonial.earnings}</span>
+                <p className="text-text-secondary mb-5 italic leading-relaxed">"{testimonial.content}"</p>
+                <div className="flex items-center justify-between pt-5 border-t border-border">
+                  <span className="text-text-secondary text-sm font-medium">Total Earned</span>
+                  <span className="text-primary font-bold text-lg">{testimonial.earnings}</span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
