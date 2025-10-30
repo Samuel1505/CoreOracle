@@ -3,7 +3,7 @@
 import { wagmiAdapter, projectId } from '@/config'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createAppKit } from '@reown/appkit/react'
-import { coreTestnet2 } from '@reown/appkit/networks'
+import { baseSepolia } from '@reown/appkit/networks' // Changed import
 import React, { type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
 
@@ -18,7 +18,7 @@ if (!projectId) {
 const metadata = {
   name: 'appkit-example',
   description: 'AppKit Example',
-  url: 'https://appkitexampleapp.com', // origin must match your domain & subdomain
+  url: 'https://appkitexampleapp.com',
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 }
 
@@ -26,11 +26,11 @@ const metadata = {
 const modal = createAppKit({
   adapters: [wagmiAdapter],
   projectId,
-  networks: [coreTestnet2],
-  defaultNetwork: coreTestnet2,
+  networks: [baseSepolia], // Changed network
+  defaultNetwork: baseSepolia, // Changed default network
   metadata: metadata,
   features: {
-    analytics: true // Optional - defaults to your Cloud configuration
+    analytics: true
   }
 })
 
