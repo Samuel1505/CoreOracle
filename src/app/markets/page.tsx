@@ -101,7 +101,7 @@ export default function MarketsPage() {
         const timeLeft = timeLeftMs > 0 ? `${Math.floor(timeLeftMs / (86400 * 1000))} days` : 'Ended';
         const prizePoolWei = pred.prizePool;
         const volumeNumeric = parseFloat(ethers.formatEther(prizePoolWei));
-        const totalVolume = `${volumeNumeric.toFixed(2)} CORE`;
+        const totalVolume = `${volumeNumeric.toFixed(2)} ETH`;
         fetched.push({
           id: Number(pred.id),
           title: pred.question,
@@ -303,7 +303,7 @@ export default function MarketsPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="entryFee">Entry Fee (CORE)</Label>
+                  <Label htmlFor="entryFee">Entry Fee (ETH)</Label>
                   <Input 
                     id="entryFee" 
                     type="number" 
@@ -317,7 +317,7 @@ export default function MarketsPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="initialPrize">Initial Prize Pool (CORE)</Label>
+                  <Label htmlFor="initialPrize">Initial Prize Pool (ETH)</Label>
                   <Input 
                     id="initialPrize" 
                     type="number" 

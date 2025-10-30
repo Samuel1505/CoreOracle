@@ -51,7 +51,7 @@ export default function DashboardPage() {
   const [achievements, setAchievements] = useState([
     { name: "First Bet", description: "Placed your first prediction", earned: false },
     { name: "Lucky Streak", description: "Won 5 bets in a row", earned: false },
-    { name: "High Roller", description: "Placed a bet over 100 CORE", earned: false },
+    { name: "High Roller", description: "Placed a bet over 100 ETH", earned: false },
     { name: "Oracle", description: "Achieved 80% win rate", earned: false },
   ])
 
@@ -89,13 +89,13 @@ export default function DashboardPage() {
         const timeLeftMs = Number(pred.endTime) * 1000 - Date.now();
         const timeLeft = timeLeftMs > 0 ? `${Math.floor(timeLeftMs / 86400000)} days` : 'Ended';
         const currentOdds = (Number(optionStats.percentages[option]) / 100).toFixed(0) + '%';
-        const potentialPayout = ethers.formatEther(pot[option]) + ' CORE';
-        const amount = ethers.formatEther(pred.entryFee) + ' CORE';
+        const potentialPayout = ethers.formatEther(pot[option]) + ' ETH';
+        const amount = ethers.formatEther(pred.entryFee) + ' ETH';
         const status = resolved 
           ? (option == Number(pred.winningOption) ? 'won' : 'lost')
           : (Number(optionStats.percentages[option]) > 5000 ? 'winning' : 'losing');
         const claimed = userPred.claimed;
-        const payout = claims[id] ? claims[id] + ' CORE' : '';
+        const payout = claims[id] ? claims[id] + ' ETH' : '';
         const timestamp = Number(userPred.timestamp);
         bets.push({
           id: Number(id),
@@ -143,7 +143,7 @@ export default function DashboardPage() {
       setAchievements([
         { name: "First Bet", description: "Placed your first prediction", earned: Number(stats.totalPredictions) > 0 },
         { name: "Lucky Streak", description: "Won 5 bets in a row", earned: Number(stats.longestStreak) >= 5 },
-        { name: "High Roller", description: "Placed a bet over 100 CORE", earned: false }, // Can't check easily
+        { name: "High Roller", description: "Placed a bet over 100 ETH", earned: false }, // Can't check easily
         { name: "Oracle", description: "Achieved 80% win rate", earned: Number(stats.accuracyPercentage) >= 8000 },
       ]);
     }
@@ -159,7 +159,7 @@ export default function DashboardPage() {
             <div className="w-8 h-8 bg-gradient-to-r from-black-500 to-blue-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">CoreOracle</span>
+            <span className="text-xl font-bold text-white">ETHOracle</span>
           </Link>
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="/markets" className="text-slate-300 hover:text-white transition-colors">
@@ -217,7 +217,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-400 text-sm">Total Earnings</p>
-                  <p className="text-2xl font-bold text-white">{userStats.totalEarnings} CORE</p>
+                  <p className="text-2xl font-bold text-white">{userStats.totalEarnings} ETH</p>
                 </div>
                 <DollarSign className="w-8 h-8 text-yellow-400" />
               </div>
@@ -229,7 +229,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-400 text-sm">Current Balance</p>
-                  <p className="text-2xl font-bold text-white">{userStats.currentBalance} CORE</p>
+                  <p className="text-2xl font-bold text-white">{userStats.currentBalance} ETH</p>
                 </div>
                 <Wallet className="w-8 h-8 text-blue-400" />
               </div>
@@ -352,7 +352,7 @@ export default function DashboardPage() {
                                       ? (Number.parseFloat(activity.payout.split(" ")[0]) -
                                          Number.parseFloat(activity.amount.split(" ")[0]))
                                       : 0
-                                  ).toFixed(2)} CORE
+                                  ).toFixed(2)} ETH
                                 </div>
                               )}
                             </div>
