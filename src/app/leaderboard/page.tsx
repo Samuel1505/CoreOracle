@@ -156,9 +156,10 @@ export default function LeaderboardPage() {
 
       const userCounts: {[key: string]: number} = {}
       for (const event of events) {
-        // Safer type checking
-        if (event.args && Array.isArray(event.args) && event.args.length > 0) {
-          const user = event.args[0]
+        // Type guard: check if this is an EventLog (not a plain Log)
+        if ('args' in event && event.args) {
+          // event.args can be accessed as Result type or array-like
+          const user = event.args[0] // First argument is typically the user address
           if (typeof user === "string") {
             userCounts[user] = (userCounts[user] || 0) + 1
           }
