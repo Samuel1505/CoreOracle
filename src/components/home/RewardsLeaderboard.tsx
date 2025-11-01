@@ -3,8 +3,9 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Award, Trophy, ChevronRight } from "lucide-react"
+import { Award, Trophy } from "lucide-react"
+import { RewardTier } from "./RewardTier"
+import { LeaderboardEntry } from "./LeaderboardEntry"
 
 interface LeaderboardUser {
   rank: number
@@ -46,37 +47,9 @@ export function RewardsLeaderboard({ leaderboard }: RewardsLeaderboardProps) {
             </div>
 
             <div className="space-y-4">
-              {tiers.map((tier, index) => {
-                const Icon = tier.icon
-                return (
-                  <motion.div 
-                    key={tier.tier} 
-                    className="glass-card p-5 hover-lift cursor-pointer"
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    whileHover={{ scale: 1.03, x: 10 }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <motion.div 
-                          className={`w-14 h-14 bg-gradient-to-br ${tier.color} rounded-full flex items-center justify-center shadow-lg`}
-                          whileHover={{ rotate: 360 }}
-                          transition={{ duration: 0.6 }}
-                        >
-                          <Icon className="w-7 h-7 text-white" />
-                        </motion.div>
-                        <div>
-                          <h3 className="text-text-primary font-bold text-lg">{tier.tier} Tier</h3>
-                          <p className="text-text-secondary text-sm">{tier.min}+ CORE earned</p>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-text-secondary" />
-                    </div>
-                  </motion.div>
-                )
-              })}
+              {tiers.map((tier, index) => (
+                <RewardTier key={tier.tier} tier={tier} index={index} />
+              ))}
             </div>
           </motion.div>
 
@@ -97,41 +70,7 @@ export function RewardsLeaderboard({ leaderboard }: RewardsLeaderboardProps) {
             <div className="glass-card-intense p-7">
               <div className="space-y-4">
                 {leaderboard.map((user, index) => (
-                  <motion.div 
-                    key={user.rank} 
-                    className="flex items-center justify-between p-4 rounded-xl hover:bg-background-card/50 transition-all cursor-pointer"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    whileHover={{ scale: 1.02, backgroundColor: "rgba(30, 41, 59, 0.6)" }}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <motion.div 
-                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base shadow-lg ${
-                          user.rank === 1 ? "bg-gradient-to-br from-yellow-500 to-yellow-300 text-white" :
-                          user.rank === 2 ? "bg-gradient-to-br from-gray-400 to-gray-300 text-white" :
-                          user.rank === 3 ? "bg-gradient-to-br from-orange-700 to-orange-500 text-white" :
-                          "bg-background-card text-text-secondary"
-                        }`}
-                        whileHover={{ scale: 1.2, rotate: 360 }}
-                        transition={{ duration: 0.4 }}
-                      >
-                        {user.rank}
-                      </motion.div>
-                      <Avatar className="w-11 h-11 ring-2 ring-primary/20">
-                        <AvatarImage src={user.avatar} alt={user.user} />
-                        <AvatarFallback>{user.user[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-text-primary font-bold">{user.user}</p>
-                        <p className="text-text-secondary text-sm">{user.accuracy} accuracy</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-primary font-bold text-lg">{user.earnings}</p>
-                    </div>
-                  </motion.div>
+                  <LeaderboardEntry key={user.rank} user={user} index={index} />
                 ))}
               </div>
 
