@@ -276,7 +276,7 @@ export default function LeaderboardPage() {
           </div>
         )}
         <div>
-          <div className="text-green-400 font-semibold">{predictor.totalEarnings} CORE</div>
+          <div className="text-green-400 font-semibold">{predictor.totalEarnings} ETH</div>
           <div className="text-slate-400 text-sm">Earnings</div>
         </div>
         <Badge className={`${getBadgeColor(predictor.badge)} text-white`}>{predictor.badge}</Badge>
@@ -317,7 +317,7 @@ export default function LeaderboardPage() {
         {/* Page Header */}
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-white mb-2">Leaderboard</h1>
-          <p className="text-slate-300">Top predictors and highest earners on CoreOracle</p>
+          <p className="text-slate-300">Top predictors and highest earners on ETHOracle</p>
         </div>
 
         {/* Error State */}
@@ -406,7 +406,7 @@ export default function LeaderboardPage() {
                                 <div className="text-slate-400 text-sm">Win Rate</div>
                               </div>
                               <div>
-                                <div className="text-xl font-semibold text-green-400">{predictor.totalEarnings} CORE</div>
+                                <div className="text-xl font-semibold text-green-400">{predictor.totalEarnings} ETH</div>
                                 <div className="text-slate-400 text-sm">Total Earnings</div>
                               </div>
                               <div className="flex justify-between text-sm">
@@ -473,7 +473,7 @@ export default function LeaderboardPage() {
                             </div>
                             <div className="flex items-center space-x-6 text-right">
                               <div>
-                                <div className="text-green-400 font-bold text-lg">{earner.totalEarnings} CORE</div>
+                                <div className="text-green-400 font-bold text-lg">{earner.totalEarnings} ETH</div>
                                 <div className="text-slate-400 text-sm">Total Earnings</div>
                               </div>
                               <div>
@@ -520,7 +520,7 @@ export default function LeaderboardPage() {
                                 <div className="text-slate-400 text-sm">Predictions</div>
                               </div>
                               <div>
-                                <div className="text-xl font-semibold text-green-400">{predictor.totalEarnings} CORE</div>
+                                <div className="text-xl font-semibold text-green-400">{predictor.totalEarnings} ETH</div>
                                 <div className="text-slate-400 text-sm">Total Earnings</div>
                               </div>
                               <Badge className={`${getBadgeColor(predictor.badge)} text-white`}>{predictor.badge}</Badge>
@@ -555,7 +555,7 @@ export default function LeaderboardPage() {
                   Monthly Rewards
                 </CardTitle>
                 <CardDescription className="text-slate-400">
-                  Top performers earn additional CORE token rewards each month
+                  Top performers earn additional ETH token rewards each month
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -563,17 +563,17 @@ export default function LeaderboardPage() {
                   <div className="text-center p-4 bg-yellow-600/20 border border-yellow-600/30 rounded-lg">
                     <Crown className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
                     <div className="text-white font-bold text-lg">1st Place</div>
-                    <div className="text-yellow-400 font-semibold">1,000 CORE</div>
+                    <div className="text-yellow-400 font-semibold">1,000 ETH</div>
                   </div>
                   <div className="text-center p-4 bg-gray-600/20 border border-gray-600/30 rounded-lg">
                     <Medal className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <div className="text-white font-bold text-lg">2nd Place</div>
-                    <div className="text-gray-400 font-semibold">500 CORE</div>
+                    <div className="text-gray-400 font-semibold">500 ETH</div>
                   </div>
                   <div className="text-center p-4 bg-amber-600/20 border border-amber-600/30 rounded-lg">
                     <Award className="w-8 h-8 text-amber-600 mx-auto mb-2" />
                     <div className="text-white font-bold text-lg">3rd Place</div>
-                    <div className="text-amber-600 font-semibold">250 CORE</div>
+                    <div className="text-amber-600 font-semibold">250 ETH</div>
                   </div>
                 </div>
               </CardContent>

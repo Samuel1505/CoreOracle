@@ -1,0 +1,38 @@
+export const liveActivity = [
+  {
+    user: "CryptoWhale",
+    avatar: "https://i.pravatar.cc/150?img=1",
+    action: "predicted YES",
+    market: "Bitcoin $100K",
+    amount: "250 CORE",
+    time: "2m ago",
+    outcome: "pending",
+  },
+  {
+    user: "SportsFan",
+    avatar: "https://i.pravatar.cc/150?img=2",
+    action: "won",
+    market: "Premier League",
+    amount: "180 CORE",
+    time: "5m ago",
+    outcome: "won",
+  },
+  {
+    user: "TradeMaster",
+    avatar: "https://i.pravatar.cc/150?img=3",
+    action: "predicted NO",
+    market: "Fed Rate Cut",
+    amount: "320 CORE",
+    time: "8m ago",
+    outcome: "pending",
+  },
+  {
+    user: "OracleKing",
+    avatar: "https://i.pravatar.cc/150?img=4",
+    action: "won",
+    market: "ETH Staking",
+    amount: "450 CORE",
+    time: "12m ago",
+    outcome: "won",
+  },
+]

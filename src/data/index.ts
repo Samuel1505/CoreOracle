@@ -1,0 +1,7 @@
+export { featuredMarkets } from "./featuredMarkets"
+export { categories } from "./categories"
+export { liveActivity } from "./liveActivity"
+export { howItWorksSteps } from "./howItWorksSteps"
+export { leaderboard } from "./leaderboard"
+export { testimonials } from "./testimonials"
+export { faqs } from "./faqs"
