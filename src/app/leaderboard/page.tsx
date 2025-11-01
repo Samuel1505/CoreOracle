@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { TrendingUp, Trophy, Medal, Award, Crown, Wallet, Users, Loader2, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import PrizePoolPredictionABI from "../../app/abi/PrizePoolPrediction-abi.json";
+import {PrizePredictionContract} from "../../app/abi/index";
 import { ethers } from 'ethers'
 
 type Leader = {
@@ -43,8 +45,6 @@ export default function LeaderboardPage() {
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum as any)
-      const PrizePoolPredictionABI = [] // Replace with actual ABI
-      const PrizePredictionContract = { address: "0x..." } // Replace with actual address
       const contract = new ethers.Contract(
         PrizePredictionContract.address,
         PrizePoolPredictionABI,
