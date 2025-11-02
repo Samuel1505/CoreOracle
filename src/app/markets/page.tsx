@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "../../components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
-import { Badge } from "../../components/ui/badge"
 import { Input } from "../../components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
-import { Search, Users, Clock, TrendingUp, Wallet } from "lucide-react"
+import { Search, RefreshCw } from "lucide-react"
 import Link from "next/link"
+import { MarketCard } from "../../components/markets/MarketCard"
+import { MarketCardSkeleton } from "../../components/markets/MarketCardSkeleton"
+import { EmptyState } from "../../components/markets/EmptyState"
+import { Header } from "../../components/layout/Header"
 import { ethers } from 'ethers';
 import PrizePoolPredictionABI from "../../app/abi/PrizePoolPrediction-abi.json";
 import {PrizePredictionContract} from "../../app/abi/index";
@@ -44,6 +46,8 @@ export default function MarketsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [sortBy, setSortBy] = useState("volume")
   const [markets, setMarkets] = useState<Market[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [question, setQuestion] = useState("")
   const [entryFee, setEntryFee] = useState("")
@@ -53,8 +57,13 @@ export default function MarketsPage() {
   const [isCreating, setIsCreating] = useState(false)
 
   // Extract fetchMarkets into a separate function to avoid duplication
-  const fetchMarkets = async () => {
+  const fetchMarkets = async (isRefresh = false) => {
     try {
+      if (isRefresh) {
+        setIsRefreshing(true)
+      } else {
+        setIsLoading(true)
+      }
       if (!window.ethereum) {
         console.log("No ethereum wallet detected");
         return;
@@ -124,6 +133,9 @@ export default function MarketsPage() {
     } catch (error) {
       console.error("Error fetching markets:", error);
       // Don't throw the error, just log it so the app doesn't crash
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
     }
   };
 
@@ -205,38 +217,24 @@ export default function MarketsPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-black-500 to-blue-500 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white">CoreOracle</span>
-          </Link>
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/markets" className="text-white font-semibold">
-              Markets
-            </Link>
-            <Link href="/dashboard" className="text-slate-300 hover:text-white transition-colors">
-              Dashboard
-            </Link>
-            <Link href="/leaderboard" className="text-slate-300 hover:text-white transition-colors">
-              Leaderboard
-            </Link>
-          </nav>
-          <Button className="bg-green-600 hover:bg-green-700">
-            <Wallet className="w-4 h-4 mr-2" />
-            Connected
-          </Button>
-        </div>
-      </header>
+      <Header />
 
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Prediction Markets</h1>
-          <p className="text-slate-300">Discover and bet on various prediction markets</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Prediction Markets</h1>
+            <p className="text-slate-300">Discover and bet on various prediction markets</p>
+          </div>
+          <Button
+            onClick={() => fetchMarkets(true)}
+            disabled={isRefreshing}
+            variant="outline"
+            className="border-slate-700 text-white hover:bg-slate-800"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
         {/* Filters and Search */}
@@ -381,150 +379,66 @@ export default function MarketsPage() {
           </TabsList>
 
           <TabsContent value="active" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {activeMarkets.map((market) => (
-                <Card
-                  key={market.id}
-                  className="bg-black-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors"
-                >
-                  <CardHeader>
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="secondary" className="bg-blue-600/20 text-purple-300">
-                        {market.category}
-                      </Badge>
-                      <div className="flex items-center text-slate-400 text-sm">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {market.timeLeft}
-                      </div>
-                    </div>
-                    <CardTitle className="text-white text-lg leading-tight">{market.title}</CardTitle>
-                    <CardDescription className="text-slate-400">Ends: {market.endDate}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center text-slate-300 text-sm">
-                          <Users className="w-4 h-4 mr-1" />
-                          {market.participants} participants
-                        </div>
-                        <span className="text-white font-semibold">{market.totalVolume}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-green-600/20 border border-green-600/30 rounded-lg p-3 text-center">
-                          <div className="text-green-400 font-semibold text-sm">YES</div>
-                          <div className="text-white text-lg font-bold">{(market.odds.yes * 100).toFixed(0)}%</div>
-                        </div>
-                        <div className="bg-red-600/20 border border-red-600/30 rounded-lg p-3 text-center">
-                          <div className="text-red-400 font-semibold text-sm">NO</div>
-                          <div className="text-white text-lg font-bold">{(market.odds.no * 100).toFixed(0)}%</div>
-                        </div>
-                      </div>
-                      <Link href={`/markets/${market.id}`}>
-                        <Button className="w-full bg-blue-600 hover:bg-purple-700">Place Bet</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <MarketCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : activeMarkets.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {activeMarkets.map((market) => (
+                  <MarketCard key={market.id} {...market} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState 
+                title="No Active Markets"
+                description="There are no active prediction markets at the moment. Check back later or create your own!"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="ending" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {endingMarkets.map((market) => (
-                <Card
-                  key={market.id}
-                  className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors"
-                >
-                  <CardHeader>
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="secondary" className="bg-purple-600/20 text-purple-300">
-                        {market.category}
-                      </Badge>
-                      <div className="flex items-center text-slate-400 text-sm">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {market.timeLeft}
-                      </div>
-                    </div>
-                    <CardTitle className="text-white text-lg leading-tight">{market.title}</CardTitle>
-                    <CardDescription className="text-slate-400">Ends: {market.endDate}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center text-slate-300 text-sm">
-                          <Users className="w-4 h-4 mr-1" />
-                          {market.participants} participants
-                        </div>
-                        <span className="text-white font-semibold">{market.totalVolume}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-green-600/20 border border-green-600/30 rounded-lg p-3 text-center">
-                          <div className="text-green-400 font-semibold text-sm">YES</div>
-                          <div className="text-white text-lg font-bold">{(market.odds.yes * 100).toFixed(0)}%</div>
-                        </div>
-                        <div className="bg-red-600/20 border border-red-600/30 rounded-lg p-3 text-center">
-                          <div className="text-red-400 font-semibold text-sm">NO</div>
-                          <div className="text-white text-lg font-bold">{(market.odds.no * 100).toFixed(0)}%</div>
-                        </div>
-                      </div>
-                      <Link href={`/markets/${market.id}`}>
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700">Place Bet</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <MarketCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : endingMarkets.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {endingMarkets.map((market) => (
+                  <MarketCard key={market.id} {...market} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState 
+                title="No Markets Ending Soon"
+                description="There are no markets ending in the next 7 days."
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="resolved" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {resolvedMarkets.map((market) => (
-                <Card
-                  key={market.id}
-                  className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-colors"
-                >
-                  <CardHeader>
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="secondary" className="bg-purple-600/20 text-purple-300">
-                        {market.category}
-                      </Badge>
-                      <div className="flex items-center text-slate-400 text-sm">
-                        <Clock className="w-4 h-4 mr-1" />
-                        Resolved
-                      </div>
-                    </div>
-                    <CardTitle className="text-white text-lg leading-tight">{market.title}</CardTitle>
-                    <CardDescription className="text-slate-400">Ended: {market.endDate}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center text-slate-300 text-sm">
-                          <Users className="w-4 h-4 mr-1" />
-                          {market.participants} participants
-                        </div>
-                        <span className="text-white font-semibold">{market.totalVolume}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-green-600/20 border border-green-600/30 rounded-lg p-3 text-center">
-                          <div className="text-green-400 font-semibold text-sm">YES</div>
-                          <div className="text-white text-lg font-bold">{(market.odds.yes * 100).toFixed(0)}%</div>
-                        </div>
-                        <div className="bg-red-600/20 border border-red-600/30 rounded-lg p-3 text-center">
-                          <div className="text-red-color font-semibold text-sm">NO</div>
-                          <div className="text-white text-lg font-bold">{(market.odds.no * 100).toFixed(0)}%</div>
-                        </div>
-                      </div>
-                      <Link href={`/markets/${market.id}`}>
-                        <Button className="w-full bg-purple-600 hover:bg-purple-700">View Details</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <MarketCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : resolvedMarkets.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {resolvedMarkets.map((market) => (
+                  <MarketCard key={market.id} {...market} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState 
+                title="No Resolved Markets"
+                description="There are no resolved markets yet."
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>
