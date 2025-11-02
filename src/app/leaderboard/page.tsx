@@ -144,7 +144,6 @@ export default function LeaderboardPage() {
 
   async function fetchParticipationLeaderboard(contract: ethers.Contract): Promise<Leader[]> {
     try {
-      // Add block range limit to prevent timeout
       const currentBlock = await contract.runner?.provider?.getBlockNumber()
       const fromBlock = Math.max(0, (currentBlock || 0) - 10000) // Last ~10k blocks
       
@@ -156,10 +155,8 @@ export default function LeaderboardPage() {
 
       const userCounts: {[key: string]: number} = {}
       for (const event of events) {
-        // Type guard: check if this is an EventLog (not a plain Log)
         if ('args' in event && event.args) {
-          // event.args can be accessed as Result type or array-like
-          const user = event.args[0] // First argument is typically the user address
+          const user = event.args[0] 
           if (typeof user === "string") {
             userCounts[user] = (userCounts[user] || 0) + 1
           }
