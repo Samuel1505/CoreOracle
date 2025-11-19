@@ -156,7 +156,7 @@ export default function DashboardPage() {
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-black-500 to-blue-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-linear-to-r from-black to-blue-500 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold text-white">ETHOracle</span>
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                       ) : (
                         recentActivity.map((activity, index) => (
                           <div key={index} className="flex items-start space-x-3 p-3 bg-slate-700/30 rounded-lg">
-                            <div className="flex-shrink-0">
+                            <div className="shrink-0">
                               {activity.type === "bet_placed" && (
                                 <div className="w-8 h-8 bg-blue-600/20 rounded-full flex items-center justify-center">
                                   <Target className="w-4 h-4 text-blue-400" />

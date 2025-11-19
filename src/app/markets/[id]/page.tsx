@@ -9,8 +9,11 @@ import { Label } from "../../../components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs"
 import { Progress } from "../../../components/ui/progress"
 import { Separator } from "../../../components/ui/separator"
-import { TrendingUp, Users, Clock, ArrowLeft, Info, DollarSign, Wallet } from "lucide-react"
+import { Users, Clock, ArrowLeft, Info, DollarSign, RefreshCw } from "lucide-react"
 import Link from "next/link"
+import { CountdownTimer } from "../../../components/markets/CountdownTimer"
+import { Header } from "../../../components/layout/Header"
+import { TransactionStatus } from "../../../components/markets/TransactionStatus"
 import { ethers } from 'ethers'
 import PrizePoolPredictionABI from "../../../app/abi/PrizePoolPrediction-abi.json"
 import { PrizePredictionContract } from "../../../app/abi/index"
@@ -53,9 +56,10 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>("")
   const [recentBets, setRecentBets] = useState<RecentBet[]>([])
+  const [transactionStatus, setTransactionStatus] = useState<"idle" | "pending" | "success" | "error">("idle")
+  const [transactionMessage, setTransactionMessage] = useState<string>("")
   
   // Betting state
-  const [betAmount, setBetAmount] = useState("")
   const [selectedOutcome, setSelectedOutcome] = useState<"yes" | "no" | null>(null)
   const [isPlacingBet, setIsPlacingBet] = useState(false)
 
@@ -206,6 +210,8 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
     if (!selectedOutcome || !market) return
 
     setIsPlacingBet(true)
+    setTransactionStatus("pending")
+    setTransactionMessage("Submitting prediction to blockchain...")
     
     try {
       if (!window.ethereum) {
@@ -228,25 +234,34 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
       })
       
       console.log("Bet transaction submitted:", tx.hash)
+      setTransactionMessage("Waiting for confirmation...")
       
       // Wait for transaction to be mined
       const receipt = await tx.wait()
       console.log("Bet transaction confirmed:", receipt.hash)
       
+      setTransactionStatus("success")
+      setTransactionMessage("Prediction submitted successfully!")
+      
       // Reset form
-      setBetAmount("")
       setSelectedOutcome(null)
       
       // Refresh market data
       setTimeout(() => {
         fetchMarketData()
-      }, 2000)
-      
-      alert("Prediction submitted successfully!")
+        setTransactionStatus("idle")
+        setTransactionMessage("")
+      }, 3000)
       
     } catch (err) {
       console.error("Bet placement failed:", err)
-      alert(`Failed to submit prediction: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setTransactionStatus("error")
+      setTransactionMessage(err instanceof Error ? err.message : 'Transaction failed. Please try again.')
+      
+      setTimeout(() => {
+        setTransactionStatus("idle")
+        setTransactionMessage("")
+      }, 5000)
     } finally {
       setIsPlacingBet(false)
     }
@@ -293,32 +308,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-black-500 to-blue-500 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white">CoreOracle</span>
-          </Link>
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/markets" className="text-slate-300 hover:text-white transition-colors">
-              Markets
-            </Link>
-            <Link href="/dashboard" className="text-slate-300 hover:text-white transition-colors">
-              Dashboard
-            </Link>
-            <Link href="/leaderboard" className="text-slate-300 hover:text-white transition-colors">
-              Leaderboard
-            </Link>
-          </nav>
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <Wallet className="w-4 h-4 mr-2" />
-            Connected
-          </Button>
-        </div>
-      </header>
+      <Header />
 
       <div className="container mx-auto px-4 py-8">
         {/* Back Button */}
@@ -337,10 +327,14 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                   <Badge variant="secondary" className="bg-purple-600/20 text-purple-300">
                     {market.category}
                   </Badge>
-                  <div className="flex items-center text-slate-400 text-sm">
-                    <Clock className="w-4 h-4 mr-1" />
-                    {market.timeLeft} left
-                  </div>
+                  {market.status === "active" ? (
+                    <CountdownTimer endTime={market.endTime} />
+                  ) : (
+                    <div className="flex items-center text-slate-400 text-sm">
+                      <Clock className="w-4 h-4 mr-1" />
+                      {market.status === "resolved" ? "Resolved" : "Ended"}
+                    </div>
+                  )}
                 </div>
                 <CardTitle className="text-2xl text-white leading-tight">{market.title}</CardTitle>
                 <CardDescription className="text-slate-300 text-base">
@@ -491,7 +485,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                   <CardContent className="pt-6">
                     <div className="space-y-4 text-slate-300">
                       <div className="flex items-start space-x-2">
-                        <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <Info className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" />
                         <div>
                           <h4 className="text-white font-semibold mb-1">Prediction Rules</h4>
                           <p>
@@ -500,7 +494,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                         </div>
                       </div>
                       <div className="flex items-start space-x-2">
-                        <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <Info className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" />
                         <div>
                           <h4 className="text-white font-semibold mb-1">Resolution</h4>
                           <p>
@@ -509,7 +503,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                         </div>
                       </div>
                       <div className="flex items-start space-x-2">
-                        <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <Info className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" />
                         <div>
                           <h4 className="text-white font-semibold mb-1">Payouts</h4>
                           <p>
@@ -534,6 +528,9 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Transaction Status */}
+                <TransactionStatus status={transactionStatus} message={transactionMessage} />
+
                 {market.status === 'active' ? (
                   <>
                     {/* Outcome Selection */}
@@ -582,13 +579,11 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                           <span className="text-white">{market.entryFee}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-300">Potential Share:</span>
-                          <span className="text-green-400 font-semibold">
-                            {selectedOutcome === "yes" 
-                              ? `${(market.odds.yes * 100).toFixed(1)}% of prize pool`
-                              : `${(market.odds.no * 100).toFixed(1)}% of prize pool`
-                            }
-                          </span>
+                          <span className="text-slate-300">Current Prize Pool:</span>
+                          <span className="text-green-400 font-semibold">{market.prizePool}</span>
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1">
+                          * Winners split the prize pool equally
                         </div>
                       </div>
                     )}
@@ -596,10 +591,17 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                     {/* Submit Prediction Button */}
                     <Button
                       onClick={handlePlaceBet}
-                      disabled={!selectedOutcome || isPlacingBet}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                      disabled={!selectedOutcome || isPlacingBet || transactionStatus === "pending"}
+                      className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
                     >
-                      {isPlacingBet ? "Submitting Prediction..." : "Submit Prediction"}
+                      {isPlacingBet ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        "Submit Prediction"
+                      )}
                     </Button>
                   </>
                 ) : (
