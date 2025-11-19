@@ -485,7 +485,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                   <CardContent className="pt-6">
                     <div className="space-y-4 text-slate-300">
                       <div className="flex items-start space-x-2">
-                        <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <Info className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" />
                         <div>
                           <h4 className="text-white font-semibold mb-1">Prediction Rules</h4>
                           <p>
@@ -494,7 +494,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                         </div>
                       </div>
                       <div className="flex items-start space-x-2">
-                        <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <Info className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" />
                         <div>
                           <h4 className="text-white font-semibold mb-1">Resolution</h4>
                           <p>
@@ -503,7 +503,7 @@ export default function MarketDetailPage({ params }: { params: Promise<{ id: str
                         </div>
                       </div>
                       <div className="flex items-start space-x-2">
-                        <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                        <Info className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" />
                         <div>
                           <h4 className="text-white font-semibold mb-1">Payouts</h4>
                           <p>
